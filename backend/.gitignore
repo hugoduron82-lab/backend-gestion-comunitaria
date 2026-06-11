@@ -4,3 +4,6 @@ dist/
 .ts-node 
 .nyc_output 
 coverage 
+"node_modules/" 
+"uploads/" 
+"*.pdf" 
