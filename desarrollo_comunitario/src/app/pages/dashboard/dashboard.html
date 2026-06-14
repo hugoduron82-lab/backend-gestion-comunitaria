@@ -1,0 +1,395 @@
+<div class="flex h-screen overflow-hidden bg-slate-100">
+
+  <!-- Fondo oscuro al abrir el menú en móvil -->
+  @if (sidebarAbierto()) {
+    <div
+      class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+      (click)="sidebarAbierto.set(false)"
+    ></div>
+  }
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    [class.translate-x-0]="sidebarAbierto()"
+    [class.-translate-x-full]="!sidebarAbierto()"
+  >
+
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <img src="/logo-danli.png" alt="Municipalidad de Danlí"
+           class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
+      <div>
+        <div class="text-sm font-bold leading-tight">Gestión Comunitaria</div>
+        <div class="text-xs text-white/50">Municipalidad de Danlí</div>
+      </div>
+    </div>
+
+    <div class="m-3.5 px-3.5 py-3 bg-white/5 rounded-lg flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {{ iniciales() }}
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-semibold truncate">{{ usuario?.correo }}</div>
+        <div class="text-xs text-white/50">{{ nombreRol() }}</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3.5 overflow-y-auto">
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
+        <span class="w-5 text-center">📊</span> Dashboard
+      </div>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🏘️</span> <a routerLink="/registro">Organizaciones</a>
+      </div>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">👥</span> Directivas
+      </div>
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔔</span> Alertas
+        @if ((stats()?.total_vencidas ?? 0) + (stats()?.total_proximas_vencer ?? 0) > 0) {
+          <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {{ (stats()?.total_vencidas ?? 0) + (stats()?.total_proximas_vencer ?? 0) }}
+          </span>
+        }
+      </div>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔄</span> Renovaciones
+      </div>
+
+      @if (esAdmin() || esJefe()) {
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⭐</span> Autorizaciones
+        </div>
+      }
+
+      @if (esAdmin()) {
+        <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">👤</span> Usuarios
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">📋</span> Bitácora
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⚙️</span> Configuración
+        </div>
+      }
+
+    </nav>
+
+    <div class="p-4 border-t border-white/10 flex-shrink-0">
+      <button
+        (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Barra superior FIJA -->
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button (click)="sidebarAbierto.set(!sidebarAbierto())" class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú">
+          ☰
+        </button>
+        <h2 class="text-base font-bold text-slate-800">Panel de control</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-500 capitalize hidden sm:block">{{ fechaHoy }}</span>
+        @if (esAdmin() || esJefe() || esTecnico()) {
+        <a routerLink="/registro"
+          class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+          + Nueva organización
+        </a>
+        }
+      </div>
+    </div>
+
+    <!-- Contenido con scroll propio -->
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
+
+      <!-- Tarjetas de estadísticas -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total organizaciones</div>
+          <div class="text-4xl font-bold text-slate-800 mb-1">
+            {{ cargandoStats() ? '...' : (stats()?.total_organizaciones ?? 0) }}
+          </div>
+          <div class="text-xs text-slate-500 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span> Patronatos y Juntas de Agua
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Al día</div>
+          <div class="text-4xl font-bold text-slate-800 mb-1">
+            {{ cargandoStats() ? '...' : (stats()?.total_activas ?? 0) }}
+          </div>
+          <div class="text-xs text-slate-500 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-600"></span> Vigentes sin problemas
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Próximas a vencer</div>
+          <div class="text-4xl font-bold text-slate-800 mb-1">
+            {{ cargandoStats() ? '...' : (stats()?.total_proximas_vencer ?? 0) }}
+          </div>
+          <div class="text-xs text-slate-500 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Vencen en menos de 30 días
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Vencidas</div>
+          <div class="text-4xl font-bold text-slate-800 mb-1">
+            {{ cargandoStats() ? '...' : (stats()?.total_vencidas ?? 0) }}
+          </div>
+          <div class="text-xs text-slate-500 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-600"></span> Requieren renovación urgente
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ FILTROS Y ORGANIZACIONES ============ -->
+      <div class="bg-white rounded-xl border border-slate-200">
+
+        <!-- Barra de filtros -->
+        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
+
+          <!-- Tabs semáforo -->
+          <div class="flex gap-1.5 flex-wrap">
+            <button
+              (click)="setSemaforo('todos')"
+              [class.bg-slate-800]="filtroSemaforo() === 'todos'"
+              [class.text-white]="filtroSemaforo() === 'todos'"
+              [class.bg-slate-100]="filtroSemaforo() !== 'todos'"
+              [class.text-slate-600]="filtroSemaforo() !== 'todos'"
+              class="text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition"
+            >
+              <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+              Todas <span class="opacity-70">({{ contarSemaforo('todos') }})</span>
+            </button>
+
+            <button
+              (click)="setSemaforo('activa')"
+              [class.bg-slate-800]="filtroSemaforo() === 'activa'"
+              [class.text-white]="filtroSemaforo() === 'activa'"
+              [class.bg-slate-100]="filtroSemaforo() !== 'activa'"
+              [class.text-slate-600]="filtroSemaforo() !== 'activa'"
+              class="text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition"
+            >
+              <span class="w-2 h-2 rounded-full bg-green-600"></span>
+              Activas <span class="opacity-70">({{ contarSemaforo('activa') }})</span>
+            </button>
+
+            <button
+              (click)="setSemaforo('proxima_vencer')"
+              [class.bg-slate-800]="filtroSemaforo() === 'proxima_vencer'"
+              [class.text-white]="filtroSemaforo() === 'proxima_vencer'"
+              [class.bg-slate-100]="filtroSemaforo() !== 'proxima_vencer'"
+              [class.text-slate-600]="filtroSemaforo() !== 'proxima_vencer'"
+              class="text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition"
+            >
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              Por vencer <span class="opacity-70">({{ contarSemaforo('proxima_vencer') }})</span>
+            </button>
+
+            <button
+              (click)="setSemaforo('vencida')"
+              [class.bg-slate-800]="filtroSemaforo() === 'vencida'"
+              [class.text-white]="filtroSemaforo() === 'vencida'"
+              [class.bg-slate-100]="filtroSemaforo() !== 'vencida'"
+              [class.text-slate-600]="filtroSemaforo() !== 'vencida'"
+              class="text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition"
+            >
+              <span class="w-2 h-2 rounded-full bg-red-600"></span>
+              Vencidas <span class="opacity-70">({{ contarSemaforo('vencida') }})</span>
+            </button>
+          </div>
+
+          <!-- Tabs tipo -->
+          <div class="flex gap-1.5">
+            <button
+              (click)="setCategoria('todos')"
+              [class.bg-slate-800]="filtroCategoria() === 'todos'"
+              [class.text-white]="filtroCategoria() === 'todos'"
+              [class.border-slate-200]="filtroCategoria() !== 'todos'"
+              [class.text-slate-500]="filtroCategoria() !== 'todos'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              Todos
+            </button>
+
+            <button
+              (click)="setCategoria('patronato')"
+              [class.bg-slate-800]="filtroCategoria() === 'patronato'"
+              [class.text-white]="filtroCategoria() === 'patronato'"
+              [class.border-slate-200]="filtroCategoria() !== 'patronato'"
+              [class.text-slate-500]="filtroCategoria() !== 'patronato'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              🏘️ Patronatos ({{ contarCategoria('patronato') }})
+            </button>
+
+            <button
+              (click)="setCategoria('junta_agua')"
+              [class.bg-slate-800]="filtroCategoria() === 'junta_agua'"
+              [class.text-white]="filtroCategoria() === 'junta_agua'"
+              [class.border-slate-200]="filtroCategoria() !== 'junta_agua'"
+              [class.text-slate-500]="filtroCategoria() !== 'junta_agua'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              💧 Juntas de Agua ({{ contarCategoria('junta_agua') }})
+            </button>
+          </div>
+
+          <!-- Búsqueda y zona -->
+          <div class="flex gap-2 ml-auto">
+            <input
+              type="text"
+              [ngModel]="busqueda()"
+              (ngModelChange)="onBusquedaChange($event)"
+              placeholder="Buscar..."
+              class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <select
+              [ngModel]="filtroZona() ?? ''"
+              (ngModelChange)="onZonaChange($event)"
+              class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todas las zonas</option>
+              @for (z of zonas(); track z.id) {
+                <option [value]="z.id">{{ z.nombre }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Leyenda -->
+        <div class="px-4 py-2 border-b border-slate-200 flex flex-wrap gap-4 text-xs text-slate-500">
+          <span class="font-semibold text-slate-600">Semáforo:</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-600"></span> Vigente</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Por vencer</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-600"></span> Vencida</span>
+
+          @if (!cargandoOrgs()) {
+            <span class="ml-auto text-slate-400">
+              Mostrando {{ organizaciones().length }} de {{ totalRegistros() }} organizaciones
+            </span>
+          }
+        </div>
+
+        <!-- Grid de tarjetas -->
+        <div class="p-4">
+
+          @if (cargandoOrgs()) {
+            <p class="text-sm text-slate-400 text-center py-8">Cargando organizaciones...</p>
+          } @else if (organizaciones().length === 0) {
+            <div class="text-center py-12 text-slate-400">
+              <div class="text-3xl mb-2">🔍</div>
+              No se encontraron resultados.
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              @for (o of organizaciones(); track o.id) {
+                <div
+                  class="border rounded-xl p-4 border-l-4"
+                  [class.border-l-green-600]="o.estado === 'activa'"
+                  [class.border-l-amber-500]="o.estado === 'proxima_vencer'"
+                  [class.border-l-red-600]="o.estado === 'vencida'"
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="font-bold text-sm text-slate-800">{{ o.nombre }}</span>
+                    <span
+                      class="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0"
+                      [class.bg-green-600]="o.estado === 'activa'"
+                      [class.bg-amber-500]="o.estado === 'proxima_vencer'"
+                      [class.bg-red-600]="o.estado === 'vencida'"
+                    ></span>
+                  </div>
+
+                  <div class="space-y-1.5 mb-3">
+                    <div class="flex items-center gap-2 text-xs text-slate-600">
+                      <span>🏘️</span>
+                      <span>{{ o.colonia_sector || '—' }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-600">
+                      <span>📍</span>
+                      <span>{{ o.zona?.nombre }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span class="text-xs font-semibold bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                      {{ o.tipo?.nombre }}
+                    </span>
+                    <span
+                      class="text-xs font-semibold px-2 py-1 rounded"
+                      [class.bg-green-50]="o.estado === 'activa'"
+                      [class.text-green-700]="o.estado === 'activa'"
+                      [class.bg-amber-50]="o.estado === 'proxima_vencer'"
+                      [class.text-amber-700]="o.estado === 'proxima_vencer'"
+                      [class.bg-red-50]="o.estado === 'vencida'"
+                      [class.text-red-700]="o.estado === 'vencida'"
+                    >
+                      {{ textoVigencia(o) }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (totalPaginas() > 1) {
+              <div class="flex justify-center items-center gap-2 mt-5">
+                <button
+                  (click)="irPagina(paginaActual() - 1)"
+                  [disabled]="paginaActual() === 1"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                >
+                  ← Anterior
+                </button>
+
+                <span class="text-xs text-slate-500 px-2">
+                  Página {{ paginaActual() }} de {{ totalPaginas() }}
+                </span>
+
+                <button
+                  (click)="irPagina(paginaActual() + 1)"
+                  [disabled]="paginaActual() === totalPaginas()"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            }
+          }
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
