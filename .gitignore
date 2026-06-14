@@ -1,0 +1,15 @@
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/uploads/
+
+# Frontend
+desarrollo_comunitario/node_modules/
+desarrollo_comunitario/dist/
+desarrollo_comunitario/.angular/
+
+# General
+.DS_Store
+*.log
+repo_remoto/
