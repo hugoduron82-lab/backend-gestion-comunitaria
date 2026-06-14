@@ -5,8 +5,12 @@ import Zona from '../models/Zona';
 import TipoOrganizacion from '../models/TipoOrganizacion';
 import Configuracion from '../models/Configuracion';
 import { registrarBitacora, obtenerIp } from '../services/loggerService';
+<<<<<<< HEAD
 import { Op } from 'sequelize';
 import sequelize from '../config/db';
+=======
+import { Op } from 'sequelize';   // ← IMPORTANTE: importar Op
+>>>>>>> origin/feature/frontend-nestor
 
 const parseIdParam = (param: string | string[]): number => {
   const str = Array.isArray(param) ? param[0] : param;
@@ -54,6 +58,7 @@ export const crearOrganizacion = async (req: AuthRequest, res: Response) => {
   }
 };
 
+<<<<<<< HEAD
 // ── Listado con filtros y paginación ────────────────────────
 // Acepta: ?pagina=1&porPagina=12&zona=3&estado=activa&tipo=2&categoria=patronato&busqueda=texto
 export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
@@ -113,6 +118,30 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
       porPagina: perPage,
       totalPaginas: Math.max(1, Math.ceil(count / perPage))
     });
+=======
+export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
+  try {
+    const { zona, estado, tipo } = req.query;
+    const where: any = {};
+    // Por defecto, excluir las inactivas (a menos que se pida explícitamente)
+    if (!estado) {
+      where.estado = { [Op.ne]: 'inactiva' };   // ← CORREGIDO: usa Op.ne
+    } else {
+      where.estado = estado;
+    }
+    if (zona) where.id_zona = parseInt(zona as string);
+    if (tipo) where.id_tipo = parseInt(tipo as string);
+
+    const orgs = await Organizacion.findAll({
+      where,
+      include: [
+        { model: Zona, as: 'zona', attributes: ['nombre'] },
+        { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria'] }
+      ],
+      order: [['creado_en', 'DESC']]
+    });
+    res.json(orgs);
+>>>>>>> origin/feature/frontend-nestor
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Error al listar organizaciones' });
@@ -166,7 +195,11 @@ export const eliminarOrganizacion = async (req: AuthRequest, res: Response) => {
     const org = await Organizacion.findByPk(id);
     if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
     await org.update({ estado: 'inactiva' });
+<<<<<<< HEAD
     await org.reload();
+=======
+    await org.reload();   // ← recargar para asegurar que la instancia tenga el nuevo estado
+>>>>>>> origin/feature/frontend-nestor
     await registrarBitacora(
       req.usuario!.id,
       'organizaciones',
@@ -179,6 +212,7 @@ export const eliminarOrganizacion = async (req: AuthRequest, res: Response) => {
   } catch (err) {
     res.status(500).json({ msg: 'Error al eliminar' });
   }
+<<<<<<< HEAD
 };
 
 export const obtenerDashboard = async (req: AuthRequest, res: Response) => {
@@ -190,3 +224,6 @@ export const obtenerDashboard = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ msg: 'Error al obtener estadísticas del dashboard' });
   }
 };
+=======
+};  
+>>>>>>> origin/feature/frontend-nestor

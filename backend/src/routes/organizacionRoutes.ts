@@ -4,8 +4,12 @@ import {
   listarOrganizaciones,
   obtenerOrganizacion,
   actualizarOrganizacion,
+<<<<<<< HEAD
   eliminarOrganizacion,
   obtenerDashboard
+=======
+  eliminarOrganizacion
+>>>>>>> origin/feature/frontend-nestor
 } from '../controllers/organizacionController';
 import auth from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
