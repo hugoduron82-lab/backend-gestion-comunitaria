@@ -1,0 +1,278 @@
+<!-- pages/organizaciones-lista/organizaciones-lista.html -->
+<div class="flex h-screen overflow-hidden bg-slate-100">
+
+  @if (sidebarAbierto()) {
+    <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
+  }
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    [class.translate-x-0]="sidebarAbierto()"
+    [class.-translate-x-full]="!sidebarAbierto()"
+  >
+
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <img src="/logo-danli.png" alt="Municipalidad de Danlí"
+           class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
+      <div>
+        <div class="text-sm font-bold leading-tight">Gestión Comunitaria</div>
+        <div class="text-xs text-white/50">Municipalidad de Danlí</div>
+      </div>
+    </div>
+
+    <div class="m-3.5 px-3.5 py-3 bg-white/5 rounded-lg flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {{ iniciales() }}
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-semibold truncate">{{ usuario?.correo }}</div>
+        <div class="text-xs text-white/50">{{ nombreRol() }}</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3.5 overflow-y-auto">
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
+
+      <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📊</span> Dashboard
+      </a>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
+        <span class="w-5 text-center">🏘️</span> Organizaciones
+      </div>
+
+      <a routerLink="/historial-directivas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📜</span> Historial de Directivas
+      </a>
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
+
+      <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔔</span> Alertas
+      </a>
+
+      <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔄</span> Renovaciones
+      </a>
+
+      @if (esAdmin() || esJefe()) {
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⭐</span> Autorizaciones
+        </div>
+      }
+
+      @if (esAdmin()) {
+        <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">👤</span> Usuarios
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">📋</span> Bitácora
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⚙️</span> Configuración
+        </div>
+      }
+
+    </nav>
+
+    <div class="p-4 border-t border-white/10 flex-shrink-0">
+      <button
+        (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button
+          (click)="sidebarAbierto.set(!sidebarAbierto())"
+          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Organizaciones Comunitarias</h2>
+          <p class="text-xs text-slate-500">Listado completo para reportes</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          class="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition whitespace-nowrap">
+          🖨️ Imprimir
+        </button>
+        @if (esAdmin() || esJefe() || esTecnico()) {
+          <a routerLink="/registro"
+            class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+            + Nueva organización
+          </a>
+        }
+      </div>
+    </div>
+
+    
+
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
+      <div class="bg-white rounded-xl border border-slate-200">
+
+        <!-- Filtros -->
+        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
+
+          <!-- Tabs categoría -->
+          <div class="flex gap-1.5">
+            <button
+              (click)="setCategoria('todos')"
+              [class.bg-slate-800]="filtroCategoria() === 'todos'"
+              [class.text-white]="filtroCategoria() === 'todos'"
+              [class.border-slate-200]="filtroCategoria() !== 'todos'"
+              [class.text-slate-500]="filtroCategoria() !== 'todos'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              Todos
+            </button>
+            <button
+              (click)="setCategoria('patronato')"
+              [class.bg-slate-800]="filtroCategoria() === 'patronato'"
+              [class.text-white]="filtroCategoria() === 'patronato'"
+              [class.border-slate-200]="filtroCategoria() !== 'patronato'"
+              [class.text-slate-500]="filtroCategoria() !== 'patronato'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              🏘️ Patronatos
+            </button>
+            <button
+              (click)="setCategoria('junta_agua')"
+              [class.bg-slate-800]="filtroCategoria() === 'junta_agua'"
+              [class.text-white]="filtroCategoria() === 'junta_agua'"
+              [class.border-slate-200]="filtroCategoria() !== 'junta_agua'"
+              [class.text-slate-500]="filtroCategoria() !== 'junta_agua'"
+              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
+            >
+              💧 Juntas de Agua
+            </button>
+          </div>
+
+          <!-- Tipo y Zona -->
+          <select
+            [ngModel]="filtroTipo() ?? ''"
+            (ngModelChange)="onTipoChange($event)"
+            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos los tipos</option>
+            @for (t of tipos(); track t.id) {
+              <option [value]="t.id">{{ t.nombre }}</option>
+            }
+          </select>
+
+          <select
+            [ngModel]="filtroZona() ?? ''"
+            (ngModelChange)="onZonaChange($event)"
+            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todas las zonas</option>
+            @for (z of zonas(); track z.id) {
+              <option [value]="z.id">{{ z.nombre }}</option>
+            }
+          </select>
+
+          <!-- Búsqueda -->
+          <input
+            type="text"
+            [ngModel]="busqueda()"
+            (ngModelChange)="onBusquedaChange($event)"
+            placeholder="Buscar por nombre..."
+            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
+          />
+
+          @if (!cargando()) {
+            <span class="text-xs text-slate-400 w-full">
+              {{ organizaciones().length }} organización(es)
+            </span>
+          }
+        </div>
+
+        <!-- Tabla -->
+        <div class="overflow-x-auto">
+          @if (cargando()) {
+            <p class="text-sm text-slate-400 text-center py-8">Cargando...</p>
+          } @else if (organizaciones().length === 0) {
+            <div class="text-center py-12 text-slate-400">
+              <div class="text-3xl mb-2">🔍</div>
+              No se encontraron resultados.
+            </div>
+          } @else {
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-left text-slate-500 font-semibold">
+                  <th class="px-3 py-2.5 whitespace-nowrap">Nombre</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Tipo</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Zona</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Colonia / Sector</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">F. Inscripción</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">F. Vencimiento</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Tomo</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Folio</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Estado</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Presidente</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Teléfono</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of organizaciones(); track o.id) {
+                  <tr class="border-b border-slate-100 hover:bg-slate-50">
+                    <td class="px-3 py-2.5 font-semibold text-slate-800 whitespace-nowrap">{{ o.nombre }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.tipo?.nombre }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.zona?.nombre }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.colonia_sector || '—' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.fecha_inscripcion | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.tomo || '—' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.folio || '—' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">
+                      <span
+                        class="px-2 py-0.5 rounded-full font-semibold"
+                        [class.bg-green-50]="o.estado === 'activa'"
+                        [class.text-green-700]="o.estado === 'activa'"
+                        [class.bg-amber-50]="o.estado === 'proxima_vencer'"
+                        [class.text-amber-700]="o.estado === 'proxima_vencer'"
+                        [class.bg-red-50]="o.estado === 'vencida'"
+                        [class.text-red-700]="o.estado === 'vencida'"
+                      >
+                        {{ textoEstado(o) }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">
+                      @if (presidente(o)) {
+                        {{ presidente(o).nombre_completo }}
+                      } @else {
+                        <span class="text-slate-400">—</span>
+                      }
+                    </td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">
+                      {{ presidente(o)?.telefono_personal || '—' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

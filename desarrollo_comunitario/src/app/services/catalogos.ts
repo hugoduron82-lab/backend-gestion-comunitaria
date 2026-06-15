@@ -12,6 +12,6 @@ export class CatalogosService {
   }
 
   tipos() {
-    return this.http.get<any>(`${this.apiUrl}/tipos`);
+    return this.http.get<any>(`${this.apiUrl}/tipos-organizacion`);
   }
 }

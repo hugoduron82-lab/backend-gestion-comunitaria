@@ -1,0 +1,239 @@
+<!-- pages/historial-directivas/historial-directivas.html -->
+<div class="flex h-screen overflow-hidden bg-slate-100">
+
+  @if (sidebarAbierto()) {
+    <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
+  }
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    [class.translate-x-0]="sidebarAbierto()"
+    [class.-translate-x-full]="!sidebarAbierto()"
+  >
+
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <img src="/logo-danli.png" alt="Municipalidad de Danlí"
+           class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
+      <div>
+        <div class="text-sm font-bold leading-tight">Gestión Comunitaria</div>
+        <div class="text-xs text-white/50">Municipalidad de Danlí</div>
+      </div>
+    </div>
+
+    <div class="m-3.5 px-3.5 py-3 bg-white/5 rounded-lg flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {{ iniciales() }}
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-semibold truncate">{{ usuario?.correo }}</div>
+        <div class="text-xs text-white/50">{{ nombreRol() }}</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3.5 overflow-y-auto">
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
+
+      <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📊</span> Dashboard
+      </a>
+
+      <a routerLink="/organizaciones-lista" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🏘️</span> Organizaciones
+      </a>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
+        <span class="w-5 text-center">📜</span> Historial de Directivas
+      </div>
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
+
+      <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔔</span> Alertas
+      </a>
+
+      <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔄</span> Renovaciones
+      </a>
+
+      @if (esAdmin() || esJefe()) {
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⭐</span> Autorizaciones
+        </div>
+      }
+
+      @if (esAdmin()) {
+        <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">👤</span> Usuarios
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">📋</span> Bitácora
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⚙️</span> Configuración
+        </div>
+      }
+
+    </nav>
+
+    <div class="p-4 border-t border-white/10 flex-shrink-0">
+      <button
+        (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button
+          (click)="sidebarAbierto.set(!sidebarAbierto())"
+          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Historial de Directivas</h2>
+          <p class="text-xs text-slate-500">Registro de cambios de directiva por organización</p>
+        </div>
+      </div>
+      <a routerLink="/dashboard" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
+        ← Volver al dashboard
+      </a>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
+      <div class="bg-white rounded-xl border border-slate-200 max-w-5xl mx-auto">
+
+        <!-- Filtros -->
+        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
+          <input
+            type="text"
+            [ngModel]="busqueda()"
+            (ngModelChange)="onBusquedaChange($event)"
+            placeholder="Buscar por nombre de organización..."
+            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+          />
+          <select
+            [ngModel]="filtroZona() ?? ''"
+            (ngModelChange)="onZonaChange($event)"
+            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todas las zonas</option>
+            @for (z of zonas(); track z.id) {
+              <option [value]="z.id">{{ z.nombre }}</option>
+            }
+          </select>
+          @if (!cargando()) {
+            <span class="text-xs text-slate-400 ml-auto">{{ totalRegistros() }} evento(s)</span>
+          }
+        </div>
+
+        <!-- Lista -->
+        <div class="p-4">
+          @if (cargando()) {
+            <p class="text-sm text-slate-400 text-center py-8">Cargando historial...</p>
+          } @else if (eventos().length === 0) {
+            <div class="text-center py-12 text-slate-400">
+              <div class="text-3xl mb-2">📜</div>
+              No hay cambios de directiva registrados todavía.
+            </div>
+          } @else {
+            <div class="space-y-3">
+              @for (e of eventos(); track e.fecha_cambio + '-' + e.id_organizacion) {
+                <div class="border border-slate-200 rounded-xl p-4">
+                  <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+                    <div>
+                      <div class="text-sm font-bold text-slate-800">{{ e.organizacion }}</div>
+                      <div class="text-xs text-slate-500">{{ e.zona }}</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-semibold text-slate-600">
+                        {{ e.fecha_cambio | date:'dd/MM/yyyy' }}
+                      </div>
+                      <div class="text-xs text-slate-400">
+                        {{ e.totalMiembrosSalientes }} miembro(s) renovado(s)
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    <div class="bg-slate-50 rounded-lg p-3">
+                      <div class="text-[10px] font-bold uppercase text-slate-400 mb-1">Presidente saliente</div>
+                      @if (e.presidenteSaliente) {
+                        <div class="text-sm font-semibold text-slate-700">{{ e.presidenteSaliente.nombre_completo }}</div>
+                        @if (e.presidenteSaliente.dni) {
+                          <div class="text-xs text-slate-400">DNI: {{ e.presidenteSaliente.dni }}</div>
+                        }
+                      } @else {
+                        <div class="text-sm text-slate-400">Sin cambio de presidente en este evento</div>
+                      }
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3">
+                      <div class="text-[10px] font-bold uppercase text-green-600 mb-1">Presidente actual</div>
+                      @if (e.presidenteEntrante) {
+                        <div class="text-sm font-semibold text-slate-700">{{ e.presidenteEntrante.nombre_completo }}</div>
+                        @if (e.presidenteEntrante.dni) {
+                          <div class="text-xs text-slate-400">DNI: {{ e.presidenteEntrante.dni }}</div>
+                        }
+                      } @else {
+                        <div class="text-sm text-slate-400">Sin presidente registrado actualmente</div>
+                      }
+                    </div>
+                  </div>
+
+                  @if (e.motivo) {
+                    <div class="text-xs text-slate-500 mt-3">
+                      <span class="font-semibold">Motivo:</span> {{ e.motivo }}
+                    </div>
+                  }
+                  @if (e.registrado_por) {
+                    <div class="text-xs text-slate-400 mt-1">
+                      Registrado por {{ e.registrado_por }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (totalPaginas() > 1) {
+              <div class="flex justify-center items-center gap-2 mt-5">
+                <button
+                  (click)="irPagina(paginaActual() - 1)"
+                  [disabled]="paginaActual() === 1"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                >
+                  ← Anterior
+                </button>
+                <span class="text-xs text-slate-500 px-2">
+                  Página {{ paginaActual() }} de {{ totalPaginas() }}
+                </span>
+                <button
+                  (click)="irPagina(paginaActual() + 1)"
+                  [disabled]="paginaActual() === totalPaginas()"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            }
+          }
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

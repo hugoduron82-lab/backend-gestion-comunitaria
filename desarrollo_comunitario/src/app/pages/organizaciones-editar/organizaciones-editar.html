@@ -1,0 +1,368 @@
+<!-- pages/organizaciones-editar/organizaciones-editar.html -->
+<div class="flex h-screen overflow-hidden bg-slate-100">
+
+  @if (sidebarAbierto()) {
+    <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
+  }
+
+  <!-- ============ MODAL DE AUTORIZACIÓN (solo Técnico) ============ -->
+  @if (mostrarModalAuth()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+        <h3 class="text-sm font-bold text-slate-800 mb-1">Autorización requerida</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          Para editar esta organización, el Jefe de Desarrollo Comunitario debe
+          ingresar su correo y contraseña.
+        </p>
+
+        @if (authError()) {
+          <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-3">
+            ⚠️ {{ authError() }}
+          </div>
+        }
+
+        <div class="mb-3">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Correo del Jefe de Desarrollo</label>
+          <input type="email" [(ngModel)]="authCorreo" [ngModelOptions]="{standalone: true}"
+            placeholder="correo@municipalidadhn.info"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Contraseña</label>
+          <input type="password" [(ngModel)]="authPassword" [ngModelOptions]="{standalone: true}"
+            (keyup.enter)="verificarAutorizacion()"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button (click)="cancelarAutorizacion()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+            Cancelar
+          </button>
+          <button (click)="verificarAutorizacion()" [disabled]="verificandoAuth()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white hover:bg-blue-700 transition disabled:opacity-60">
+            {{ verificandoAuth() ? 'Verificando...' : 'Autorizar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    [class.translate-x-0]="sidebarAbierto()"
+    [class.-translate-x-full]="!sidebarAbierto()"
+  >
+
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <img src="/logo-danli.png" alt="Municipalidad de Danlí"
+           class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
+      <div>
+        <div class="text-sm font-bold leading-tight">Gestión Comunitaria</div>
+        <div class="text-xs text-white/50">Municipalidad de Danlí</div>
+      </div>
+    </div>
+
+    <div class="m-3.5 px-3.5 py-3 bg-white/5 rounded-lg flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {{ iniciales() }}
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-semibold truncate">{{ usuario?.correo }}</div>
+        <div class="text-xs text-white/50">{{ nombreRol() }}</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3.5 overflow-y-auto">
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
+
+      <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📊</span> Dashboard
+      </a>
+
+      <a routerLink="/registro" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🏘️</span> Organizaciones
+      </a>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">👥</span> Directivas
+      </div>
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
+
+      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔔</span> Alertas
+      </div>
+
+      <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔄</span> Renovaciones
+      </a>
+
+      @if (esAdmin() || esJefe()) {
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⭐</span> Autorizaciones
+        </div>
+      }
+
+      @if (esAdmin()) {
+        <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">👤</span> Usuarios
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">📋</span> Bitácora
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⚙️</span> Configuración
+        </div>
+      }
+
+    </nav>
+
+    <div class="p-4 border-t border-white/10 flex-shrink-0">
+      <button
+        (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button
+          (click)="sidebarAbierto.set(!sidebarAbierto())"
+          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Editar organización</h2>
+          <p class="text-xs text-slate-500">Corregir datos generales y miembros de la directiva</p>
+        </div>
+      </div>
+      <a routerLink="/dashboard" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
+        ← Volver al dashboard
+      </a>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
+
+      @if (cargando) {
+        <p class="text-sm text-slate-400 text-center py-8">Cargando...</p>
+      } @else {
+        <div class="bg-white rounded-xl border border-slate-200 p-5 max-w-4xl mx-auto"
+             [class.opacity-40]="!desbloqueado()"
+             [class.pointer-events-none]="!desbloqueado()">
+
+          @if (error()) {
+            <div class="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2 mb-4">
+              ⚠️ {{ error() }}
+            </div>
+          }
+          @if (exito()) {
+            <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2 mb-4">
+              ✅ {{ exito() }}
+            </div>
+          }
+
+          <h3 class="text-sm font-bold text-slate-800 mb-4">Datos de la organización</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre completo de la organización *</label>
+              <input type="text" [(ngModel)]="nombre" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de organización *</label>
+              <select [(ngModel)]="id_tipo" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option [ngValue]="null">Seleccionar tipo...</option>
+                @for (t of tipos(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.nombre }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Zona *</label>
+              <select [(ngModel)]="id_zona" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option [ngValue]="null">Seleccionar zona...</option>
+                @for (z of zonas(); track z.id) {
+                  <option [ngValue]="z.id">{{ z.nombre }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Colonia / Sector</label>
+              <input type="text" [(ngModel)]="colonia_sector" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha de inscripción *</label>
+              <input type="date" [(ngModel)]="fecha_inscripcion" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Tomo (libro físico)</label>
+              <input type="text" [(ngModel)]="tomo" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Folio (libro físico)</label>
+              <input type="text" [(ngModel)]="folio" [ngModelOptions]="{standalone: true}"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Observaciones</label>
+            <textarea [(ngModel)]="observaciones" [ngModelOptions]="{standalone: true}" rows="2"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+
+          <!-- Directiva -->
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-800">
+              Miembros de la directiva
+              <span class="text-xs font-normal text-slate-400">({{ totalMiembros() }} de 9)</span>
+            </h3>
+            @if (totalMiembros() < 9) {
+              <button (click)="abrirFormNuevo()"
+                class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                + Agregar miembro
+              </button>
+            }
+          </div>
+
+          @if (directiva().length === 0) {
+            <p class="text-xs text-slate-400 mb-6">Esta organización no tiene directiva registrada.</p>
+          } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              @for (m of directiva(); track m.id) {
+                <div class="border border-slate-200 rounded-lg p-3 relative">
+                  <div class="flex justify-between items-center mb-2">
+                    <div class="text-xs font-bold text-slate-500 uppercase">{{ m.cargoNombre }}</div>
+                    <button (click)="quitarMiembro(m)"
+                      class="text-xs font-semibold text-red-500 hover:text-red-700 transition"
+                      title="Quitar de la directiva">
+                      🗑 Quitar
+                    </button>
+                  </div>
+                  <input type="text" [(ngModel)]="m.nombre_completo" [ngModelOptions]="{standalone: true}"
+                    placeholder="Nombre completo"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" [(ngModel)]="m.dni" [ngModelOptions]="{standalone: true}"
+                    placeholder="DNI: 0000-0000-00000"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" [(ngModel)]="m.telefono_personal" [ngModelOptions]="{standalone: true}"
+                    placeholder="Teléfono"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="date" [(ngModel)]="m.fecha_inicio" [ngModelOptions]="{standalone: true}"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                  @if (m.dni !== m._original.dni) {
+                    <div class="text-xs text-amber-600 mt-2">
+                      ⚠️ Cambiaste el DNI: se validará (presidente con 2 períodos, conflicto patronato/junta de agua).
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Formulario: agregar nuevo miembro -->
+          @if (mostrarFormNuevo()) {
+            <div class="border border-blue-200 bg-blue-50 rounded-lg p-4 mb-6">
+              <h4 class="text-sm font-bold text-slate-800 mb-3">Nuevo miembro de la directiva</h4>
+
+              @if (errorNuevo()) {
+                <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-3">
+                  ⚠️ {{ errorNuevo() }}
+                </div>
+              }
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Cargo *</label>
+                  <select [(ngModel)]="nuevoMiembro.id_cargo" [ngModelOptions]="{standalone: true}"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    @for (c of cargosDisponibles(); track c.id) {
+                      <option [ngValue]="c.id">{{ c.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha de inicio *</label>
+                  <input type="date" [(ngModel)]="nuevoMiembro.fecha_inicio" [ngModelOptions]="{standalone: true}"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre completo *</label>
+                  <input type="text" [(ngModel)]="nuevoMiembro.nombre_completo" [ngModelOptions]="{standalone: true}"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">DNI *</label>
+                  <input type="text" [(ngModel)]="nuevoMiembro.dni" [ngModelOptions]="{standalone: true}"
+                    placeholder="0000-0000-00000"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
+                  <input type="text" [(ngModel)]="nuevoMiembro.telefono_personal" [ngModelOptions]="{standalone: true}"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2">
+                <button (click)="cancelarFormNuevo()"
+                  class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                  Cancelar
+                </button>
+                <button (click)="guardarNuevoMiembro()" [disabled]="guardandoNuevo()"
+                  class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white hover:bg-blue-700 transition disabled:opacity-60">
+                  {{ guardandoNuevo() ? 'Guardando...' : 'Agregar' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <div class="flex justify-end gap-2">
+            <a routerLink="/dashboard"
+              class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+              Cancelar
+            </a>
+            <button (click)="guardar()" [disabled]="guardando()"
+              class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white hover:bg-blue-700 transition disabled:opacity-60">
+              {{ guardando() ? 'Guardando...' : '💾 Guardar cambios' }}
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

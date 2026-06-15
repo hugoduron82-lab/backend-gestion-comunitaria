@@ -60,10 +60,23 @@ export class Dashboard implements OnInit {
     this.cargarZonas();
   }
 
-  cargarStats() {
+cargarStats() {
     this.orgService.obtenerDashboard().subscribe({
       next: (res) => {
-        this.stats.set(Array.isArray(res) ? res[0] : res);
+        const data = Array.isArray(res) ? res[0] : res;
+        // La vista v_dashboard_stats devuelve columnas DECIMAL, que
+        // MySQL/Sequelize entregan como string. Se convierten a number
+        // para que las sumas (ej. badge de Alertas) funcionen aritméticamente
+        // y no como concatenación de texto.
+        this.stats.set({
+          ...data,
+          total_organizaciones: Number(data.total_organizaciones),
+          total_activas: Number(data.total_activas),
+          total_proximas_vencer: Number(data.total_proximas_vencer),
+          total_vencidas: Number(data.total_vencidas),
+          total_patronatos: Number(data.total_patronatos),
+          total_juntas_agua: Number(data.total_juntas_agua),
+        });
         this.cargandoStats.set(false);
       },
       error: (err) => {

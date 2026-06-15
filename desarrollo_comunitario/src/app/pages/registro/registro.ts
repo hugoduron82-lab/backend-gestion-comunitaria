@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { OrganizacionesService } from '../../services/organizaciones';
 import { CatalogosService } from '../../services/catalogos';
+import { DirectivaService } from '../../services/directiva';
 
 @Component({
   selector: 'app-registro',
@@ -40,6 +41,7 @@ export class Registro implements OnInit {
   observaciones = '';
 
   // Miembros de la directiva (9 cargos posibles; los últimos 2 solo se usan si directivaAmpliada = true)
+  // El id_cargo coincide con el orden: Presidente=1, Vicepresidente=2, ..., Vocal IV=9
   miembros = [
     { cargo: 'Presidente', nombre: '', dni: '', telefono: '' },
     { cargo: 'Vicepresidente', nombre: '', dni: '', telefono: '' },
@@ -56,7 +58,8 @@ export class Registro implements OnInit {
     private auth: Auth,
     private router: Router,
     private orgService: OrganizacionesService,
-    private catalogosService: CatalogosService
+    private catalogosService: CatalogosService,
+    private directivaService: DirectivaService
   ) {
     this.usuario = this.auth.getUsuario();
   }
@@ -81,6 +84,15 @@ export class Registro implements OnInit {
       return;
     }
 
+    // Validar que los miembros activos (según directivaAmpliada) tengan nombre y DNI
+    const totalMiembros = this.directivaAmpliada() ? 9 : 7;
+    const miembrosActivos = this.miembros.slice(0, totalMiembros);
+    const incompleto = miembrosActivos.find(m => !m.nombre || !m.dni);
+    if (incompleto) {
+      this.error.set(`Completa nombre y DNI de todos los miembros de la directiva (${incompleto.cargo})`);
+      return;
+    }
+
     this.guardando.set(true);
 
     const payload = {
@@ -91,20 +103,57 @@ export class Registro implements OnInit {
       tomo: this.tomo,
       folio: this.folio,
       fecha_inscripcion: this.fecha_inscripcion,
-      total_directiva: this.directivaAmpliada() ? 9 : 7,
+      total_directiva: totalMiembros,
       observaciones: this.observaciones
     };
 
     this.orgService.crear(payload).subscribe({
-      next: (res) => {
-        // Organización creada (res.id). Los miembros de la directiva
-        // se conectarán cuando tengamos el endpoint de directiva.
-        this.guardando.set(false);
-        this.router.navigate(['/dashboard']);
+      next: (org) => {
+        // Organización creada (org.id). Ahora registramos cada miembro
+        // de la directiva uno por uno. Cada inserción pasa por el trigger
+        // trg_validar_directiva_ins (valida conflicto patronato/junta de
+        // agua, límite de períodos del presidente, máximo 9 miembros).
+        this.guardarDirectiva(org.id, miembrosActivos, 0);
       },
       error: (err) => {
         this.guardando.set(false);
         this.error.set(err.error?.msg || 'Error al guardar la organización');
+      }
+    });
+  }
+
+  // Guarda los miembros de la directiva uno por uno, en orden.
+  // Si alguno falla (ej. el trigger bloquea por conflicto patronato/junta
+  // de agua, o límite de períodos del presidente), se detiene y muestra
+  // el mensaje exacto al usuario, pero la organización YA quedó creada.
+  private guardarDirectiva(idOrganizacion: number, miembros: any[], index: number) {
+    if (index >= miembros.length) {
+      // Todos los miembros se guardaron correctamente
+      this.guardando.set(false);
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    const m = miembros[index];
+    const payload = {
+      id_organizacion: idOrganizacion,
+      id_cargo: index + 1, // 1=Presidente, 2=Vicepresidente, ..., 9=Vocal IV
+      nombre_completo: m.nombre,
+      dni: m.dni,
+      telefono_personal: m.telefono,
+      fecha_inicio: this.fecha_inscripcion
+    };
+
+    this.directivaService.asignarMiembro(payload).subscribe({
+      next: () => {
+        this.guardarDirectiva(idOrganizacion, miembros, index + 1);
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        const cargoConError = m.cargo;
+        this.error.set(
+          `La organización se creó, pero hubo un problema con "${cargoConError}": ${err.error?.msg || 'Error al guardar este miembro de la directiva'}. Puedes corregirlo desde la organización ya creada.`
+        );
       }
     });
   }
