@@ -4,12 +4,11 @@ import {
   listarOrganizaciones,
   obtenerOrganizacion,
   actualizarOrganizacion,
-<<<<<<< HEAD
+  renovarOrganizacion,
   eliminarOrganizacion,
-  obtenerDashboard
-=======
-  eliminarOrganizacion
->>>>>>> origin/feature/frontend-nestor
+  obtenerDashboard,
+  obtenerAlertas,
+  listarReporte
 } from '../controllers/organizacionController';
 import auth from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
@@ -38,6 +37,47 @@ router.use(auth);
  *         description: Estadísticas del dashboard
  */
 router.get('/dashboard', obtenerDashboard);
+
+/**
+ * @swagger
+ * /organizaciones/alertas:
+ *   get:
+ *     summary: Obtener organizaciones próximas a vencer y vencidas, con datos del presidente
+ *     tags: [Organizaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Listas de organizaciones próximas a vencer y vencidas
+ */
+router.get('/alertas', obtenerAlertas);
+
+/**
+ * @swagger
+ * /organizaciones/reporte:
+ *   get:
+ *     summary: Reporte completo de organizaciones (para regidores), con presidente y teléfono
+ *     tags: [Organizaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: zona
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: tipo
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: categoria
+ *         schema: { type: string, enum: [patronato, junta_agua] }
+ *       - in: query
+ *         name: busqueda
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Lista completa de organizaciones con datos para reporte
+ */
+router.get('/reporte', listarReporte);
 
 /**
  * @swagger
@@ -121,6 +161,41 @@ router.get('/:id', obtenerOrganizacion);
  *         description: No tiene permisos
  */
 router.post('/', authorize([1, 2, 3]), crearOrganizacion);
+
+/**
+ * @swagger
+ * /organizaciones/{id}/renovar:
+ *   put:
+ *     summary: Renovar la vigencia de una organización (solo roles 1,2,3)
+ *     tags: [Organizaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fecha_vencimiento_nueva]
+ *             properties:
+ *               fecha_vencimiento_nueva: { type: string, format: date }
+ *               tomo_nuevo: { type: string }
+ *               folio_nuevo: { type: string }
+ *               observaciones: { type: string }
+ *     responses:
+ *       200:
+ *         description: Organización renovada, estado recalculado automáticamente
+ *       400:
+ *         description: Falta fecha_vencimiento_nueva
+ *       404:
+ *         description: No encontrada
+ */
+router.put('/:id/renovar', authorize([1, 2, 3]), renovarOrganizacion);
 
 /**
  * @swagger

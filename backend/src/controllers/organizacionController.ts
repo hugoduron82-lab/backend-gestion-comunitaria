@@ -4,13 +4,11 @@ import Organizacion from '../models/Organizacion';
 import Zona from '../models/Zona';
 import TipoOrganizacion from '../models/TipoOrganizacion';
 import Configuracion from '../models/Configuracion';
+import Renovacion from '../models/Renovacion';
+import DirectivaMiembro from '../models/DirectivaMiembro';
 import { registrarBitacora, obtenerIp } from '../services/loggerService';
-<<<<<<< HEAD
 import { Op } from 'sequelize';
 import sequelize from '../config/db';
-=======
-import { Op } from 'sequelize';   // ← IMPORTANTE: importar Op
->>>>>>> origin/feature/frontend-nestor
 
 const parseIdParam = (param: string | string[]): number => {
   const str = Array.isArray(param) ? param[0] : param;
@@ -58,9 +56,7 @@ export const crearOrganizacion = async (req: AuthRequest, res: Response) => {
   }
 };
 
-<<<<<<< HEAD
 // ── Listado con filtros y paginación ────────────────────────
-// Acepta: ?pagina=1&porPagina=12&zona=3&estado=activa&tipo=2&categoria=patronato&busqueda=texto
 export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -73,7 +69,6 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
 
     const where: any = {};
 
-    // Por defecto excluye inactivas, salvo que se pida un estado explícito
     if (!estado || estado === 'todos') {
       where.estado = { [Op.ne]: 'inactiva' };
     } else {
@@ -83,12 +78,10 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
     if (zona) where.id_zona = parseInt(zona as string, 10);
     if (tipo) where.id_tipo = parseInt(tipo as string, 10);
 
-    // Búsqueda por nombre (LIKE)
     if (busqueda) {
       where.nombre = { [Op.like]: `%${busqueda}%` };
     }
 
-    // Filtro por categoría (patronato / junta_agua) — va sobre la tabla relacionada
     const tipoInclude: any = {
       model: TipoOrganizacion,
       as: 'tipo',
@@ -118,30 +111,6 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
       porPagina: perPage,
       totalPaginas: Math.max(1, Math.ceil(count / perPage))
     });
-=======
-export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
-  try {
-    const { zona, estado, tipo } = req.query;
-    const where: any = {};
-    // Por defecto, excluir las inactivas (a menos que se pida explícitamente)
-    if (!estado) {
-      where.estado = { [Op.ne]: 'inactiva' };   // ← CORREGIDO: usa Op.ne
-    } else {
-      where.estado = estado;
-    }
-    if (zona) where.id_zona = parseInt(zona as string);
-    if (tipo) where.id_tipo = parseInt(tipo as string);
-
-    const orgs = await Organizacion.findAll({
-      where,
-      include: [
-        { model: Zona, as: 'zona', attributes: ['nombre'] },
-        { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria'] }
-      ],
-      order: [['creado_en', 'DESC']]
-    });
-    res.json(orgs);
->>>>>>> origin/feature/frontend-nestor
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Error al listar organizaciones' });
@@ -189,17 +158,61 @@ export const actualizarOrganizacion = async (req: AuthRequest, res: Response) =>
   }
 };
 
+export const renovarOrganizacion = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseIdParam(req.params.id);
+    const org = await Organizacion.findByPk(id);
+    if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
+
+    const { fecha_vencimiento_nueva, tomo_nuevo, folio_nuevo, observaciones } = req.body;
+    if (!fecha_vencimiento_nueva) {
+      return res.status(400).json({ msg: 'fecha_vencimiento_nueva es requerida' });
+    }
+
+    const fechaAnt = org.fecha_vencimiento;
+    const fechaNueva = new Date(fecha_vencimiento_nueva);
+
+    await Renovacion.create({
+      id_organizacion: id,
+      fecha_renovacion: new Date(),
+      fecha_vencimiento_ant: fechaAnt,
+      fecha_vencimiento_nueva: fechaNueva,
+      tomo_nuevo,
+      folio_nuevo,
+      observaciones,
+      registrado_por: req.usuario!.id
+    });
+
+    const nuevoEstado = await calcularEstado(fechaNueva);
+    const updates: any = { fecha_vencimiento: fechaNueva, estado: nuevoEstado };
+    if (tomo_nuevo) updates.tomo = tomo_nuevo;
+    if (folio_nuevo) updates.folio = folio_nuevo;
+    await org.update(updates);
+    await org.reload();
+
+    await registrarBitacora(
+      req.usuario!.id,
+      'organizaciones',
+      'RENOVAR',
+      org.id,
+      `Organización renovada: ${org.nombre}. Nueva vigencia: ${fechaNueva.toLocaleDateString()}`,
+      obtenerIp(req)
+    );
+
+    res.json(org);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error al renovar organización', error: err.message });
+  }
+};
+
 export const eliminarOrganizacion = async (req: AuthRequest, res: Response) => {
   try {
     const id = parseIdParam(req.params.id);
     const org = await Organizacion.findByPk(id);
     if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
     await org.update({ estado: 'inactiva' });
-<<<<<<< HEAD
     await org.reload();
-=======
-    await org.reload();   // ← recargar para asegurar que la instancia tenga el nuevo estado
->>>>>>> origin/feature/frontend-nestor
     await registrarBitacora(
       req.usuario!.id,
       'organizaciones',
@@ -212,7 +225,6 @@ export const eliminarOrganizacion = async (req: AuthRequest, res: Response) => {
   } catch (err) {
     res.status(500).json({ msg: 'Error al eliminar' });
   }
-<<<<<<< HEAD
 };
 
 export const obtenerDashboard = async (req: AuthRequest, res: Response) => {
@@ -224,6 +236,81 @@ export const obtenerDashboard = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ msg: 'Error al obtener estadísticas del dashboard' });
   }
 };
-=======
-};  
->>>>>>> origin/feature/frontend-nestor
+
+export const obtenerAlertas = async (req: AuthRequest, res: Response) => {
+  try {
+    const baseInclude = [
+      { model: Zona, as: 'zona', attributes: ['id', 'nombre'] },
+      { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria'] },
+      {
+        model: DirectivaMiembro,
+        as: 'directiva',
+        where: { id_cargo: 1, activo: true },
+        required: false,
+        attributes: ['nombre_completo', 'telefono_personal']
+      }
+    ];
+
+    const proximasVencer = await Organizacion.findAll({
+      where: { estado: 'proxima_vencer' },
+      include: baseInclude,
+      order: [['fecha_vencimiento', 'ASC']]
+    });
+
+    const vencidas = await Organizacion.findAll({
+      where: { estado: 'vencida' },
+      include: baseInclude,
+      order: [['fecha_vencimiento', 'ASC']]
+    });
+
+    res.json({ proximas_vencer: proximasVencer, vencidas });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error al obtener alertas', error: err.message });
+  }
+};
+
+// ── Reporte de organizaciones (para regidores) ──────────────
+// Lista TODAS las organizaciones (sin paginación, pensado para imprimir),
+// incluyendo presidente y teléfono, con filtros por tipo y zona.
+export const listarReporte = async (req: AuthRequest, res: Response) => {
+  try {
+    const { zona, tipo, categoria, busqueda } = req.query;
+
+    const where: any = { estado: { [Op.ne]: 'inactiva' } };
+    if (zona) where.id_zona = parseInt(zona as string, 10);
+    if (tipo) where.id_tipo = parseInt(tipo as string, 10);
+    if (busqueda) where.nombre = { [Op.like]: `%${busqueda}%` };
+
+    const tipoInclude: any = {
+      model: TipoOrganizacion,
+      as: 'tipo',
+      attributes: ['nombre', 'categoria']
+    };
+    if (categoria && categoria !== 'todos') {
+      tipoInclude.where = { categoria };
+      tipoInclude.required = true;
+    }
+
+    const organizaciones = await Organizacion.findAll({
+      where,
+      include: [
+        { model: Zona, as: 'zona', attributes: ['id', 'nombre'] },
+        tipoInclude,
+        {
+          model: DirectivaMiembro,
+          as: 'directiva',
+          where: { id_cargo: 1, activo: true },
+          required: false,
+          attributes: ['nombre_completo', 'telefono_personal']
+        }
+      ],
+      order: [['nombre', 'ASC']]
+    });
+
+    res.json(organizaciones);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error al obtener reporte de organizaciones', error: err.message });
+  }
+};

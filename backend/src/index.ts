@@ -24,6 +24,9 @@ import certificacionRoutes from './routes/certificacionRoutes';
 import Bitacora from './models/Bitacora';
 import bitacoraRoutes from './routes/bitacoraRoutes';
 import Rol from './models/Rol';
+import Renovacion from './models/Renovacion';
+import DirectivaHistorial from './models/DirectivaHistorial';
+import historialRoutes from './routes/historialRoutes';
 
 
 // Asociación para poder incluir el usuario en la consulta
@@ -54,6 +57,7 @@ app.use('/api/autorizaciones', autorizacionRoutes);
 app.use('/api/certificaciones', certificacionRoutes);
 app.use('/api/bitacora', bitacoraRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/historial-directivas', historialRoutes);
 
 // Ruta de bienvenida
 app.get('/', (req, res) => {
@@ -66,9 +70,18 @@ Organizacion.belongsTo(Zona, { foreignKey: 'id_zona', as: 'zona' });
 Organizacion.belongsTo(TipoOrganizacion, { foreignKey: 'id_tipo', as: 'tipo' });
 DirectivaMiembro.belongsTo(Organizacion, { foreignKey: 'id_organizacion', as: 'organizacion' });
 DirectivaMiembro.belongsTo(CargoDirectiva, { foreignKey: 'id_cargo', as: 'cargo' });
-// Opcional: HistorialPresidente puede tener relación con Usuario (autorizado_por, registrado_por)
+Organizacion.hasMany(DirectivaMiembro, { foreignKey: 'id_organizacion', as: 'directiva' });
 HistorialPresidente.belongsTo(Usuario, { foreignKey: 'autorizado_por', as: 'autorizador' });
 HistorialPresidente.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
+
+// Renovaciones: cada renovación pertenece a una organización
+Organizacion.hasMany(Renovacion, { foreignKey: 'id_organizacion', as: 'renovaciones' });
+Renovacion.belongsTo(Organizacion, { foreignKey: 'id_organizacion', as: 'organizacion' });
+Renovacion.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
+
+// Historial de directivas: cada registro pertenece a una organización
+DirectivaHistorial.belongsTo(Organizacion, { foreignKey: 'id_organizacion', as: 'organizacion' });
+DirectivaHistorial.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
 
 // Sincronizar modelos con la base de datos (sin borrar datos)
 sequelize.sync()   // o { alter: false }
