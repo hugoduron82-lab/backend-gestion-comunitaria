@@ -51,16 +51,23 @@
 
       <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
         <span class="w-5 text-center">🔔</span> Alertas
+        @if (badgeAlertas.totalAlertas() > 0) {
+          <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {{ badgeAlertas.totalAlertas() }}
+          </span>
+        }
       </a>
 
-      <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">🔄</span> Renovaciones
-      </a>
+      @if (esAdmin() || esJefe() || esTecnico()) {
+        <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">🔄</span> Renovaciones
+        </a>
+      }
 
       @if (esAdmin() || esJefe()) {
-        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <a routerLink="/autorizaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">⭐</span> Autorizaciones
-        </div>
+        </a>
       }
 
       @if (esAdmin()) {

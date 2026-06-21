@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { OrganizacionesService } from '../../services/organizaciones';
+import { BadgeAlertasService } from '../../services/badge-alertas';
 
 @Component({
   selector: 'app-renovaciones',
@@ -14,22 +15,27 @@ import { OrganizacionesService } from '../../services/organizaciones';
 export class Renovaciones implements OnInit {
   usuario: any;
   sidebarAbierto = signal(false);
-
   organizaciones = signal<any[]>([]);
   cargando = signal(true);
   busqueda = signal('');
-
   private timeoutBusqueda: any;
 
   constructor(
     private auth: Auth,
     private router: Router,
-    private orgService: OrganizacionesService
+    private orgService: OrganizacionesService,
+    public badgeAlertas: BadgeAlertasService
   ) {
     this.usuario = this.auth.getUsuario();
   }
 
   ngOnInit() {
+    // Rol consulta no puede acceder a esta página
+    if (this.usuario?.id_rol === 4) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+    this.badgeAlertas.cargar();
     this.cargar();
   }
 
@@ -61,11 +67,11 @@ export class Renovaciones implements OnInit {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const venc = new Date(o.fecha_vencimiento);
-    const diffMs = hoy.getTime() - venc.getTime();
-    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return Math.round((hoy.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   esAdmin()    { return this.usuario?.id_rol === 1; }
+  esConsulta() { return this.usuario?.id_rol === 4; }
   esJefe()     { return this.usuario?.id_rol === 2; }
   esTecnico()  { return this.usuario?.id_rol === 3; }
 

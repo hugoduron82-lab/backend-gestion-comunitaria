@@ -1,0 +1,318 @@
+<!-- pages/autorizaciones/autorizaciones.html -->
+<div class="flex h-screen overflow-hidden bg-slate-100">
+
+  @if (sidebarAbierto()) {
+    <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
+  }
+
+  <!-- ============ MODAL: Nueva autorización ============ -->
+  @if (mostrarFormulario()) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-6 max-w-lg w-full">
+        <h3 class="text-sm font-bold text-slate-800 mb-1">Nueva autorización especial</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          Permite que un presidente que ya cumplió 2 períodos sea reelegido por un período adicional.
+        </p>
+
+        @if (error()) {
+          <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-3">
+            ⚠️ {{ error() }}
+          </div>
+        }
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">DNI del presidente *</label>
+            <input type="text" [(ngModel)]="nuevo.dni" [ngModelOptions]="{standalone: true}"
+              placeholder="0000-0000-00000"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre completo *</label>
+            <input type="text" [(ngModel)]="nuevo.nombre_persona" [ngModelOptions]="{standalone: true}"
+              placeholder="Nombre del presidente"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Organización *</label>
+            <select [(ngModel)]="nuevo.id_organizacion" [ngModelOptions]="{standalone: true}"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option [ngValue]="null">Seleccionar organización...</option>
+              @for (o of organizaciones(); track o.id) {
+                <option [ngValue]="o.id">{{ o.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Período solicitado *</label>
+            <input type="number" [(ngModel)]="nuevo.periodo_solicitado" [ngModelOptions]="{standalone: true}"
+              min="3" max="10"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-xs text-slate-400 mt-1">Normalmente 3 (si ya cumplió 2 períodos)</p>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Justificación *</label>
+            <textarea [(ngModel)]="nuevo.justificacion" [ngModelOptions]="{standalone: true}" rows="3"
+              placeholder="Ej: La asamblea comunitaria aprobó por unanimidad la reelección del presidente en sesión del 21/06/2026, acta N°..."
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button (click)="cancelar()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+            Cancelar
+          </button>
+          <button (click)="guardar()" [disabled]="guardando()"
+            class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition disabled:opacity-60">
+            {{ guardando() ? 'Guardando...' : '⭐ Emitir autorización' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    [class.translate-x-0]="sidebarAbierto()"
+    [class.-translate-x-full]="!sidebarAbierto()"
+  >
+
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <img src="/logo-danli.png" alt="Municipalidad de Danlí"
+           class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
+      <div>
+        <div class="text-sm font-bold leading-tight">Gestión Comunitaria</div>
+        <div class="text-xs text-white/50">Municipalidad de Danlí</div>
+      </div>
+    </div>
+
+    <div class="m-3.5 px-3.5 py-3 bg-white/5 rounded-lg flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {{ iniciales() }}
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-semibold truncate">{{ usuario?.correo }}</div>
+        <div class="text-xs text-white/50">{{ nombreRol() }}</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3.5 overflow-y-auto">
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
+
+      <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📊</span> Dashboard
+      </a>
+
+      <a routerLink="/organizaciones-lista" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🏘️</span> Organizaciones
+      </a>
+
+      <a routerLink="/historial-directivas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📜</span> Historial de Directivas
+      </a>
+
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
+
+      <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">🔔</span> Alertas
+        @if (badgeAlertas.totalAlertas() > 0) {
+          <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {{ badgeAlertas.totalAlertas() }}
+          </span>
+        }
+      </a>
+
+      @if (esAdmin() || esJefe() || esTecnico()) {
+        <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">🔄</span> Renovaciones
+        </a>
+      }
+
+      @if (esAdmin() || esJefe()) {
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
+          <span class="w-5 text-center">⭐</span> Autorizaciones
+        </div>
+      }
+
+      @if (esAdmin()) {
+        <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">👤</span> Usuarios
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">📋</span> Bitácora
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">⚙️</span> Configuración
+        </div>
+      }
+
+    </nav>
+
+    <div class="p-4 border-t border-white/10 flex-shrink-0">
+      <button
+        (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button
+          (click)="sidebarAbierto.set(!sidebarAbierto())"
+          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">Autorizaciones especiales</h2>
+          <p class="text-xs text-slate-500">Reelección de presidentes más allá de 2 períodos</p>
+        </div>
+      </div>
+      <button (click)="abrirFormulario()"
+        class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+        + Nueva autorización
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
+
+      @if (exito()) {
+        <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2 mb-4 max-w-4xl mx-auto">
+          ✅ {{ exito() }}
+        </div>
+      }
+
+      @if (cargando()) {
+        <p class="text-sm text-slate-400 text-center py-8">Cargando autorizaciones...</p>
+      } @else {
+        <div class="max-w-4xl mx-auto space-y-6">
+
+          <!-- Autorizaciones activas -->
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-amber-50 px-4 py-3 border-b border-amber-200 flex justify-between items-center">
+              <span class="text-sm font-bold text-amber-700">
+                ⭐ Autorizaciones activas
+                <span class="text-xs font-normal ml-1">(pendientes de usar en una renovación)</span>
+              </span>
+              <span class="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                {{ activas().length }}
+              </span>
+            </div>
+
+            @if (activas().length === 0) {
+              <div class="text-center py-8 text-slate-400 text-sm">
+                No hay autorizaciones activas pendientes.
+              </div>
+            } @else {
+              <div class="divide-y divide-slate-100">
+                @for (a of activas(); track a.id) {
+                  <div class="p-4 flex flex-col md:flex-row gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-bold text-sm text-slate-800">{{ a.nombre_persona }}</div>
+                      <div class="text-xs text-slate-500 mt-0.5">DNI: {{ a.dni }}</div>
+                      <div class="text-xs text-slate-600 mt-1">
+                        🏘️ {{ a.nombre_organizacion }}
+                        <span class="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                          {{ a.categoria_org === 'patronato' ? 'Patronato' : 'Junta de Agua' }}
+                        </span>
+                      </div>
+                      @if (a.justificacion) {
+                        <div class="text-xs text-slate-500 mt-2 italic">
+                          "{{ a.justificacion }}"
+                        </div>
+                      }
+                    </div>
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0 text-right">
+                      <span class="text-xs font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                        ✅ Período {{ a.periodo_solicitado }} autorizado
+                      </span>
+                      <span class="text-xs text-slate-400">
+                        {{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}
+                      </span>
+                      @if (a.autorizador) {
+                        <span class="text-xs text-slate-400">
+                          Por: {{ a.autorizador.correo }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Historial de autorizaciones usadas -->
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+              <span class="text-sm font-bold text-slate-600">
+                📋 Historial de autorizaciones usadas
+              </span>
+              <span class="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                {{ historicas().length }}
+              </span>
+            </div>
+
+            @if (historicas().length === 0) {
+              <div class="text-center py-8 text-slate-400 text-sm">
+                No hay autorizaciones históricas todavía.
+              </div>
+            } @else {
+              <div class="divide-y divide-slate-100">
+                @for (a of historicas(); track a.id) {
+                  <div class="p-4 flex flex-col md:flex-row gap-3 opacity-70">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-bold text-sm text-slate-700">{{ a.nombre_persona }}</div>
+                      <div class="text-xs text-slate-500 mt-0.5">DNI: {{ a.dni }}</div>
+                      <div class="text-xs text-slate-600 mt-1">
+                        🏘️ {{ a.nombre_organizacion }}
+                      </div>
+                      @if (a.justificacion) {
+                        <div class="text-xs text-slate-500 mt-2 italic">
+                          "{{ a.justificacion }}"
+                        </div>
+                      }
+                    </div>
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0 text-right">
+                      <span class="text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-1 rounded-full">
+                        ✓ Período {{ a.periodo_solicitado }} — ya usado
+                      </span>
+                      <span class="text-xs text-slate-400">
+                        {{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}
+                      </span>
+                      @if (a.autorizador) {
+                        <span class="text-xs text-slate-400">
+                          Por: {{ a.autorizador.correo }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

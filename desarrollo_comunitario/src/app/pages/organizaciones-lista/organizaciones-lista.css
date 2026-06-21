@@ -1,0 +1,72 @@
+/* pages/organizaciones-lista/organizaciones-lista.css */
+
+/* ── Estilos de impresión ──────────────────────────────────── */
+@media print {
+
+  /* Ocultar sidebar, topbar, filtros y botones */
+  aside,
+  .print-hidden,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  /* Mostrar encabezado de impresión */
+  .print-header {
+    display: block !important;
+  }
+
+  /* El contenedor principal ocupa todo el ancho */
+  body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Quitar overflow para que la tabla se expanda */
+  * {
+    overflow: visible !important;
+    overflow-x: visible !important;
+  }
+
+  /* Tabla ocupa todo el ancho de la hoja */
+  table {
+    width: 100% !important;
+    font-size: 8px !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  th, td {
+    padding: 3px 5px !important;
+    border: 1px solid #e2e8f0 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Encabezado de tabla fijo en cada página */
+  thead {
+    display: table-header-group !important;
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Evitar que las filas se corten entre páginas */
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Imprimir colores de fondo */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar botones de dropdown en cabecera */
+  th button {
+    display: none !important;
+  }
+
+  /* Usar tamaño carta horizontal para más columnas */
+  @page {
+    size: legal landscape;
+    margin: 1cm;
+  }
+}

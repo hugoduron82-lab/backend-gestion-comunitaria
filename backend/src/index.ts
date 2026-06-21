@@ -9,7 +9,6 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
 import { config } from './config/env';
 
-// Modelos (para definir asociaciones)
 import usuarioRoutes from './routes/usuarioRoutes';
 import Usuario from './models/Usuario';
 import Zona from './models/Zona';
@@ -27,28 +26,22 @@ import Rol from './models/Rol';
 import Renovacion from './models/Renovacion';
 import DirectivaHistorial from './models/DirectivaHistorial';
 import historialRoutes from './routes/historialRoutes';
+import AutorizacionReeleccion from './models/AutorizacionReeleccion';
 
-
-// Asociación para poder incluir el usuario en la consulta
 Bitacora.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 Usuario.belongsTo(Rol, { foreignKey: 'id_rol', as: 'rol' });
-
-
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Swagger UI (documentación interactiva)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Endpoint para ver la especificación JSON
 app.get('/api-spec.json', (req, res) => {
-  console.log('Solicitando /api-spec.json'); // Para depurar
+  console.log('Solicitando /api-spec.json');
   res.json(swaggerSpec);
 });
 
-// Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/catalogos', catalogoRoutes);
 app.use('/api/organizaciones', organizacionRoutes);
@@ -59,12 +52,11 @@ app.use('/api/bitacora', bitacoraRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/historial-directivas', historialRoutes);
 
-// Ruta de bienvenida
 app.get('/', (req, res) => {
   res.send('Backend funcionando - Documentación en /api-docs');
 });
 
-// Asociaciones (relaciones entre modelos)
+// Asociaciones
 Organizacion.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
 Organizacion.belongsTo(Zona, { foreignKey: 'id_zona', as: 'zona' });
 Organizacion.belongsTo(TipoOrganizacion, { foreignKey: 'id_tipo', as: 'tipo' });
@@ -73,18 +65,15 @@ DirectivaMiembro.belongsTo(CargoDirectiva, { foreignKey: 'id_cargo', as: 'cargo'
 Organizacion.hasMany(DirectivaMiembro, { foreignKey: 'id_organizacion', as: 'directiva' });
 HistorialPresidente.belongsTo(Usuario, { foreignKey: 'autorizado_por', as: 'autorizador' });
 HistorialPresidente.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
-
-// Renovaciones: cada renovación pertenece a una organización
 Organizacion.hasMany(Renovacion, { foreignKey: 'id_organizacion', as: 'renovaciones' });
 Renovacion.belongsTo(Organizacion, { foreignKey: 'id_organizacion', as: 'organizacion' });
 Renovacion.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
-
-// Historial de directivas: cada registro pertenece a una organización
 DirectivaHistorial.belongsTo(Organizacion, { foreignKey: 'id_organizacion', as: 'organizacion' });
 DirectivaHistorial.belongsTo(Usuario, { foreignKey: 'registrado_por', as: 'registrador' });
+// Autorización de reelección: quién emitió la autorización
+AutorizacionReeleccion.belongsTo(Usuario, { foreignKey: 'autorizado_por', as: 'autorizador' });
 
-// Sincronizar modelos con la base de datos (sin borrar datos)
-sequelize.sync()   // o { alter: false }
+sequelize.sync()
   .then(() => {
     app.listen(config.port, () => {
       console.log(`Servidor corriendo en http://localhost:${config.port}`);

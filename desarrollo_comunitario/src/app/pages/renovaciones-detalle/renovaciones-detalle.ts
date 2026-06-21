@@ -6,6 +6,7 @@ import { Auth } from '../../services/auth';
 import { OrganizacionesService } from '../../services/organizaciones';
 import { DirectivaService } from '../../services/directiva';
 import { CatalogosService } from '../../services/catalogos';
+import { BadgeAlertasService } from '../../services/badge-alertas';
 
 @Component({
   selector: 'app-renovaciones-detalle',
@@ -17,44 +18,33 @@ import { CatalogosService } from '../../services/catalogos';
 export class RenovacionesDetalle implements OnInit {
   usuario: any;
   sidebarAbierto = signal(false);
-
   idOrganizacion!: number;
   organizacion = signal<any>(null);
   directivaActual = signal<any[]>([]);
-
   cargando = signal(true);
   guardando = signal(false);
   error = signal('');
   exito = signal('');
-
-  // Catálogos
   tipos = signal<any[]>([]);
   zonas = signal<any[]>([]);
-
-  // ── Datos de renovación (vigencia) ──────────────────────────
   fecha_vencimiento_nueva = '';
   tomo_nuevo = '';
   folio_nuevo = '';
   observaciones_renovacion = '';
-
-  // ── Directiva ────────────────────────────────────────────────
-  // false = mantener la directiva actual (no se toca directiva_miembros)
-  // true  = capturar una nueva directiva completa (llama a /directiva/renovar)
   renovarDirectivaFlag = signal(false);
   motivoCambioDirectiva = '';
   directivaAmpliada = signal(false);
 
-  // Mismos 9 cargos que en registro.ts (id_cargo = index + 1)
   miembrosNuevos = [
-    { cargo: 'Presidente', nombre: '', dni: '', telefono: '' },
+    { cargo: 'Presidente',     nombre: '', dni: '', telefono: '' },
     { cargo: 'Vicepresidente', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Secretario', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Tesorero', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Fiscal', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Vocal I', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Vocal II', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Vocal III', nombre: '', dni: '', telefono: '' },
-    { cargo: 'Vocal IV', nombre: '', dni: '', telefono: '' },
+    { cargo: 'Secretario',     nombre: '', dni: '', telefono: '' },
+    { cargo: 'Tesorero',       nombre: '', dni: '', telefono: '' },
+    { cargo: 'Fiscal',         nombre: '', dni: '', telefono: '' },
+    { cargo: 'Vocal I',        nombre: '', dni: '', telefono: '' },
+    { cargo: 'Vocal II',       nombre: '', dni: '', telefono: '' },
+    { cargo: 'Vocal III',      nombre: '', dni: '', telefono: '' },
+    { cargo: 'Vocal IV',       nombre: '', dni: '', telefono: '' },
   ];
 
   fecha_inicio_directiva = '';
@@ -65,14 +55,21 @@ export class RenovacionesDetalle implements OnInit {
     private route: ActivatedRoute,
     private orgService: OrganizacionesService,
     private directivaService: DirectivaService,
-    private catalogosService: CatalogosService
+    private catalogosService: CatalogosService,
+    public badgeAlertas: BadgeAlertasService
   ) {
     this.usuario = this.auth.getUsuario();
   }
 
   ngOnInit() {
+    // Rol consulta no puede acceder a esta página
+    if (this.usuario?.id_rol === 4) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
     const idParam = this.route.snapshot.paramMap.get('id');
     this.idOrganizacion = Number(idParam);
+    this.badgeAlertas.cargar();
 
     this.catalogosService.tipos().subscribe({
       next: (res) => this.tipos.set(Array.isArray(res) ? res : [])
@@ -86,20 +83,16 @@ export class RenovacionesDetalle implements OnInit {
 
   cargarDatos() {
     this.cargando.set(true);
-
     this.orgService.obtenerPorId(this.idOrganizacion).subscribe({
       next: (org) => {
         this.organizacion.set(org);
-        // Precargar fecha de vencimiento sugerida: vigencia del tipo
-        // sumada a la fecha actual (el usuario puede ajustarla)
         this.sugerirFechaVencimiento(org);
       },
-      error: (err) => {
+      error: () => {
         this.error.set('No se pudo cargar la organización');
         this.cargando.set(false);
       }
     });
-
     this.directivaService.listar(this.idOrganizacion).subscribe({
       next: (miembros) => {
         this.directivaActual.set(miembros ?? []);
@@ -112,7 +105,6 @@ export class RenovacionesDetalle implements OnInit {
     });
   }
 
-  // Sugiere fecha_vencimiento_nueva = hoy + vigencia_meses del tipo de la organización
   private sugerirFechaVencimiento(org: any) {
     const tipo = this.tipos().find(t => t.id === org.id_tipo);
     const vigenciaMeses = tipo?.vigencia_meses ?? 12;
@@ -132,29 +124,22 @@ export class RenovacionesDetalle implements OnInit {
     return Math.round((hoy.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // Precarga el array de miembros nuevos con los datos de la directiva actual,
-  // para que el usuario solo edite lo que cambió (ej. la misma persona reelecta)
   copiarDirectivaActual() {
     const actuales = this.directivaActual();
     this.miembrosNuevos.forEach((m, i) => {
-      const cargoId = i + 1;
-      const existente = actuales.find((a: any) => a.id_cargo === cargoId);
+      const existente = actuales.find((a: any) => a.id_cargo === i + 1);
       if (existente) {
-        m.nombre = existente.nombre_completo;
-        m.dni = existente.dni;
+        m.nombre   = existente.nombre_completo;
+        m.dni      = existente.dni;
         m.telefono = existente.telefono_personal || '';
       }
     });
-    // Si la directiva actual tiene 9 miembros, activar el modo ampliado
-    if (actuales.length > 7) {
-      this.directivaAmpliada.set(true);
-    }
+    if (actuales.length > 7) this.directivaAmpliada.set(true);
   }
 
   onToggleRenovarDirectiva(valor: boolean) {
     this.renovarDirectivaFlag.set(valor);
     if (valor && this.miembrosNuevos.every(m => !m.nombre)) {
-      // Primera vez que se activa: precargar con la directiva actual
       this.copiarDirectivaActual();
     }
   }
@@ -170,10 +155,9 @@ export class RenovacionesDetalle implements OnInit {
 
     if (this.renovarDirectivaFlag()) {
       const totalMiembros = this.directivaAmpliada() ? 9 : 7;
-      const activos = this.miembrosNuevos.slice(0, totalMiembros);
-      const incompleto = activos.find(m => !m.nombre || !m.dni);
+      const incompleto = this.miembrosNuevos.slice(0, totalMiembros).find(m => !m.nombre || !m.dni);
       if (incompleto) {
-        this.error.set(`Completa nombre y DNI de todos los miembros de la directiva (${incompleto.cargo})`);
+        this.error.set(`Completa nombre y DNI de todos los miembros (${incompleto.cargo})`);
         return;
       }
       if (!this.fecha_inicio_directiva) {
@@ -184,12 +168,11 @@ export class RenovacionesDetalle implements OnInit {
 
     this.guardando.set(true);
 
-    // 1) Renovar vigencia de la organización (recalcula estado automáticamente)
     const payloadRenovacion: any = {
       fecha_vencimiento_nueva: this.fecha_vencimiento_nueva,
       observaciones: this.observaciones_renovacion
     };
-    if (this.tomo_nuevo) payloadRenovacion.tomo_nuevo = this.tomo_nuevo;
+    if (this.tomo_nuevo)  payloadRenovacion.tomo_nuevo  = this.tomo_nuevo;
     if (this.folio_nuevo) payloadRenovacion.folio_nuevo = this.folio_nuevo;
 
     this.orgService.renovar(this.idOrganizacion, payloadRenovacion).subscribe({
@@ -197,6 +180,8 @@ export class RenovacionesDetalle implements OnInit {
         if (this.renovarDirectivaFlag()) {
           this.guardarNuevaDirectiva();
         } else {
+          // Actualizar badge tras renovar (una organización deja de ser vencida)
+          this.badgeAlertas.recargar();
           this.finalizar('Vigencia renovada correctamente.');
         }
       },
@@ -217,15 +202,18 @@ export class RenovacionesDetalle implements OnInit {
       fecha_inicio: this.fecha_inicio_directiva
     }));
 
-    this.directivaService.renovar(this.idOrganizacion, miembros, this.motivoCambioDirectiva || 'Renovación periódica').subscribe({
+    this.directivaService.renovar(
+      this.idOrganizacion, miembros,
+      this.motivoCambioDirectiva || 'Renovación periódica'
+    ).subscribe({
       next: () => {
+        this.badgeAlertas.recargar();
         this.finalizar('Vigencia y directiva renovadas correctamente.');
       },
       error: (err) => {
         this.guardando.set(false);
-        // La vigencia YA se renovó; solo falló la directiva
         this.error.set(
-          `La vigencia se renovó correctamente, pero hubo un problema con la directiva: ${err.error?.msg || 'Error desconocido'}. Puedes intentar renovar la directiva nuevamente.`
+          `La vigencia se renovó correctamente, pero hubo un problema con la directiva: ${err.error?.msg || 'Error desconocido'}.`
         );
       }
     });
@@ -238,6 +226,7 @@ export class RenovacionesDetalle implements OnInit {
   }
 
   esAdmin()    { return this.usuario?.id_rol === 1; }
+  esConsulta() { return this.usuario?.id_rol === 4; }
   esJefe()     { return this.usuario?.id_rol === 2; }
   esTecnico()  { return this.usuario?.id_rol === 3; }
 

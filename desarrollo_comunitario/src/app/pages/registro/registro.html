@@ -43,24 +43,31 @@
         <span class="w-5 text-center">🏘️</span> Organizaciones
       </div>
 
-      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">👥</span> Directivas
-      </div>
+      <a routerLink="/historial-directivas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <span class="w-5 text-center">📜</span> Historial de Directivas
+      </a>
 
       <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
 
-      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+      <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
         <span class="w-5 text-center">🔔</span> Alertas
-      </div>
+        @if (badgeAlertas.totalAlertas() > 0) {
+          <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {{ badgeAlertas.totalAlertas() }}
+          </span>
+        }
+      </a>
 
-      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">🔄</span> Renovaciones
-      </div>
+      @if (esAdmin() || esJefe() || esTecnico()) {
+        <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">🔄</span> Renovaciones
+        </a>
+      }
 
       @if (esAdmin() || esJefe()) {
-        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <a routerLink="/autorizaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">⭐</span> Autorizaciones
-        </div>
+        </a>
       }
 
       @if (esAdmin()) {

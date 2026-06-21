@@ -1,17 +1,16 @@
 <!-- pages/organizaciones-lista/organizaciones-lista.html -->
-<div class="flex h-screen overflow-hidden bg-slate-100">
+<div class="flex h-screen overflow-hidden bg-slate-100" (click)="cerrarDropdowns(); deseleccionar()">
 
   @if (sidebarAbierto()) {
     <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
   }
 
-  <!-- ============ SIDEBAR ============ -->
+  <!-- ============ SIDEBAR — oculto al imprimir ============ -->
   <aside
-    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0"
+    class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col flex-shrink-0 transition-transform duration-200 lg:translate-x-0 print:hidden"
     [class.translate-x-0]="sidebarAbierto()"
     [class.-translate-x-full]="!sidebarAbierto()"
   >
-
     <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
       <img src="/logo-danli.png" alt="Municipalidad de Danlí"
            class="w-10 h-10 object-contain flex-shrink-0 bg-white/10 rounded-lg p-1" />
@@ -32,7 +31,6 @@
     </div>
 
     <nav class="flex-1 px-3.5 overflow-y-auto">
-
       <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
 
       <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
@@ -51,66 +49,62 @@
 
       <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
         <span class="w-5 text-center">🔔</span> Alertas
+        @if (badgeAlertas.totalAlertas() > 0) {
+          <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            {{ badgeAlertas.totalAlertas() }}
+          </span>
+        }
       </a>
 
-      <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">🔄</span> Renovaciones
-      </a>
+      @if (esAdmin() || esJefe() || esTecnico()) {
+        <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+          <span class="w-5 text-center">🔄</span> Renovaciones
+        </a>
+      }
 
       @if (esAdmin() || esJefe()) {
-        <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
+        <a routerLink="/autorizaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">⭐</span> Autorizaciones
-        </div>
+        </a>
       }
 
       @if (esAdmin()) {
         <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
-
         <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">👤</span> Usuarios
         </div>
-
         <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">📋</span> Bitácora
         </div>
-
         <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-5 text-center">⚙️</span> Configuración
         </div>
       }
-
     </nav>
 
     <div class="p-4 border-t border-white/10 flex-shrink-0">
-      <button
-        (click)="cerrarSesion()"
-        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
-      >
+      <button (click)="cerrarSesion()"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition">
         🚪 Cerrar sesión
       </button>
     </div>
-
   </aside>
 
   <!-- ============ CONTENIDO PRINCIPAL ============ -->
   <div class="flex-1 flex flex-col overflow-hidden">
 
-    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0">
+    <!-- Topbar — oculto al imprimir -->
+    <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between flex-shrink-0 print:hidden">
       <div class="flex items-center gap-3">
-        <button
-          (click)="sidebarAbierto.set(!sidebarAbierto())"
-          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
-          aria-label="Abrir menú"
-        >
-          ☰
-        </button>
+        <button (click)="sidebarAbierto.set(!sidebarAbierto())"
+          class="lg:hidden text-2xl text-slate-600 leading-none px-1" aria-label="Abrir menú">☰</button>
         <div>
           <h2 class="text-base font-bold text-slate-800">Organizaciones Comunitarias</h2>
           <p class="text-xs text-slate-500">Listado completo para reportes</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button
+        <button (click)="imprimir()"
           class="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition whitespace-nowrap">
           🖨️ Imprimir
         </button>
@@ -123,147 +117,256 @@
       </div>
     </div>
 
-    
+    <!-- Encabezado solo visible al imprimir -->
+    <div class="print-header hidden print:block px-4 pt-3 pb-2 border-b border-slate-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-base font-bold text-slate-800">Municipalidad de Danlí — Desarrollo Comunitario</div>
+          <div class="text-sm text-slate-600">Listado de Organizaciones Comunitarias</div>
+        </div>
+        <div class="text-xs text-slate-500 text-right">
+          Total: {{ organizacionesFiltradas().length }} organización(es)
+        </div>
+      </div>
+    </div>
 
-    <div class="flex-1 overflow-y-auto p-4 lg:p-7">
-      <div class="bg-white rounded-xl border border-slate-200">
+    <div class="flex-1 overflow-y-auto p-4 lg:p-7 print:p-0 print:overflow-visible">
+      <div class="bg-white rounded-xl border border-slate-200 print:border-0 print:rounded-none print:shadow-none">
 
-        <!-- Filtros -->
-        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
-
-          <!-- Tabs categoría -->
-          <div class="flex gap-1.5">
-            <button
-              (click)="setCategoria('todos')"
-              [class.bg-slate-800]="filtroCategoria() === 'todos'"
-              [class.text-white]="filtroCategoria() === 'todos'"
-              [class.border-slate-200]="filtroCategoria() !== 'todos'"
-              [class.text-slate-500]="filtroCategoria() !== 'todos'"
-              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
-            >
-              Todos
+        <!-- Info de filtros activos + botón limpiar — oculto al imprimir -->
+        <div class="px-4 py-2 border-b border-slate-100 flex items-center gap-3 print:hidden">
+          <span class="text-xs text-slate-500">
+            Mostrando {{ organizacionesFiltradas().length }} de {{ organizaciones().length }} organización(es)
+          </span>
+          @if (hayFiltrosCol()) {
+            <button (click)="limpiarTodosFiltrosCol()"
+              class="text-xs text-red-500 hover:text-red-700 font-semibold">
+              ✕ Limpiar filtros de columna
             </button>
-            <button
-              (click)="setCategoria('patronato')"
-              [class.bg-slate-800]="filtroCategoria() === 'patronato'"
-              [class.text-white]="filtroCategoria() === 'patronato'"
-              [class.border-slate-200]="filtroCategoria() !== 'patronato'"
-              [class.text-slate-500]="filtroCategoria() !== 'patronato'"
-              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
-            >
-              🏘️ Patronatos
-            </button>
-            <button
-              (click)="setCategoria('junta_agua')"
-              [class.bg-slate-800]="filtroCategoria() === 'junta_agua'"
-              [class.text-white]="filtroCategoria() === 'junta_agua'"
-              [class.border-slate-200]="filtroCategoria() !== 'junta_agua'"
-              [class.text-slate-500]="filtroCategoria() !== 'junta_agua'"
-              class="text-xs font-bold px-3 py-1.5 rounded-full border transition"
-            >
-              💧 Juntas de Agua
-            </button>
-          </div>
-
-          <!-- Tipo y Zona -->
-          <select
-            [ngModel]="filtroTipo() ?? ''"
-            (ngModelChange)="onTipoChange($event)"
-            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todos los tipos</option>
-            @for (t of tipos(); track t.id) {
-              <option [value]="t.id">{{ t.nombre }}</option>
-            }
-          </select>
-
-          <select
-            [ngModel]="filtroZona() ?? ''"
-            (ngModelChange)="onZonaChange($event)"
-            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las zonas</option>
-            @for (z of zonas(); track z.id) {
-              <option [value]="z.id">{{ z.nombre }}</option>
-            }
-          </select>
-
-          <!-- Búsqueda -->
-          <input
-            type="text"
-            [ngModel]="busqueda()"
-            (ngModelChange)="onBusquedaChange($event)"
-            placeholder="Buscar por nombre..."
-            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ml-auto"
-          />
-
-          @if (!cargando()) {
-            <span class="text-xs text-slate-400 w-full">
-              {{ organizaciones().length }} organización(es)
-            </span>
           }
         </div>
 
         <!-- Tabla -->
-        <div class="overflow-x-auto">
+        <div class="w-full print:overflow-visible" style="overflow-x: auto;">
           @if (cargando()) {
-            <p class="text-sm text-slate-400 text-center py-8">Cargando...</p>
-          } @else if (organizaciones().length === 0) {
-            <div class="text-center py-12 text-slate-400">
+            <p class="text-sm text-slate-400 text-center py-8 print:hidden">Cargando...</p>
+          } @else if (organizacionesFiltradas().length === 0) {
+            <div class="text-center py-12 text-slate-400 print:hidden">
               <div class="text-3xl mb-2">🔍</div>
               No se encontraron resultados.
             </div>
           } @else {
-            <table class="w-full text-xs">
+            <table class="w-full text-xs border-collapse">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-left text-slate-500 font-semibold">
-                  <th class="px-3 py-2.5 whitespace-nowrap">Nombre</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Tipo</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Zona</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Colonia / Sector</th>
+                <tr class="bg-slate-50 border-b border-slate-200 text-left text-slate-600 font-semibold">
+
+                  <!-- Nombre -->
+                  <th class="px-3 py-2.5 min-w-48">
+                    <div class="flex items-center gap-1">
+                      Nombre
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('nombre', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['nombre']"
+                          [class.text-blue-600]="colFiltros()['nombre']">▾</button>
+                        @if (colDropdownAbierto() === 'nombre') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-52 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-2 border-b border-slate-100">
+                              <input type="text" [ngModel]="colFiltros()['nombre']" (ngModelChange)="setFiltroCol('nombre', $event)"
+                                placeholder="Buscar nombre..." autofocus
+                                class="w-full border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            </div>
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('nombre')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('nombre'); track v) {
+                                <button (click)="setFiltroCol('nombre', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded truncate"
+                                  [class.bg-blue-50]="colFiltros()['nombre'] === v"
+                                  [class.text-blue-700]="colFiltros()['nombre'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
+                  <!-- Tipo -->
+                  <th class="px-3 py-2.5 min-w-40">
+                    <div class="flex items-center gap-1">
+                      Tipo
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('tipo', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['tipo']"
+                          [class.text-blue-600]="colFiltros()['tipo']">▾</button>
+                        @if (colDropdownAbierto() === 'tipo') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-52 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('tipo')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('tipo'); track v) {
+                                <button (click)="setFiltroCol('tipo', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded"
+                                  [class.bg-blue-50]="colFiltros()['tipo'] === v"
+                                  [class.text-blue-700]="colFiltros()['tipo'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
+                  <!-- Zona -->
+                  <th class="px-3 py-2.5 min-w-32">
+                    <div class="flex items-center gap-1">
+                      Zona
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('zona', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['zona']"
+                          [class.text-blue-600]="colFiltros()['zona']">▾</button>
+                        @if (colDropdownAbierto() === 'zona') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-44 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('zona')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('zona'); track v) {
+                                <button (click)="setFiltroCol('zona', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded"
+                                  [class.bg-blue-50]="colFiltros()['zona'] === v"
+                                  [class.text-blue-700]="colFiltros()['zona'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
+                  <!-- Colonia -->
+                  <th class="px-3 py-2.5 min-w-36">
+                    <div class="flex items-center gap-1">
+                      Colonia / Sector
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('colonia', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['colonia']"
+                          [class.text-blue-600]="colFiltros()['colonia']">▾</button>
+                        @if (colDropdownAbierto() === 'colonia') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-48 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('colonia')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('colonia'); track v) {
+                                <button (click)="setFiltroCol('colonia', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded"
+                                  [class.bg-blue-50]="colFiltros()['colonia'] === v"
+                                  [class.text-blue-700]="colFiltros()['colonia'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
                   <th class="px-3 py-2.5 whitespace-nowrap">F. Inscripción</th>
                   <th class="px-3 py-2.5 whitespace-nowrap">F. Vencimiento</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Tomo</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Folio</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Estado</th>
-                  <th class="px-3 py-2.5 whitespace-nowrap">Presidente</th>
+                  <th class="px-3 py-2.5">Tomo</th>
+                  <th class="px-3 py-2.5">Folio</th>
+
+                  <!-- Estado -->
+                  <th class="px-3 py-2.5 min-w-24">
+                    <div class="flex items-center gap-1">
+                      Estado
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('estado', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['estado']"
+                          [class.text-blue-600]="colFiltros()['estado']">▾</button>
+                        @if (colDropdownAbierto() === 'estado') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-36 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('estado')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('estado'); track v) {
+                                <button (click)="setFiltroCol('estado', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded"
+                                  [class.bg-blue-50]="colFiltros()['estado'] === v"
+                                  [class.text-blue-700]="colFiltros()['estado'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
+                  <!-- Presidente -->
+                  <th class="px-3 py-2.5 min-w-44">
+                    <div class="flex items-center gap-1">
+                      Presidente
+                      <div class="relative print:hidden">
+                        <button (click)="abrirDropdownCol('presidente', $event)"
+                          class="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 transition"
+                          [class.bg-blue-100]="colFiltros()['presidente']"
+                          [class.text-blue-600]="colFiltros()['presidente']">▾</button>
+                        @if (colDropdownAbierto() === 'presidente') {
+                          <div class="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl w-56 max-h-60 overflow-y-auto" (click)="$event.stopPropagation()">
+                            <div class="p-2 border-b border-slate-100">
+                              <input type="text" [ngModel]="colFiltros()['presidente']" (ngModelChange)="setFiltroCol('presidente', $event)"
+                                placeholder="Buscar presidente..."
+                                class="w-full border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            </div>
+                            <div class="p-1">
+                              <button (click)="limpiarFiltroCol('presidente')" class="w-full text-left px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded">✕ Limpiar</button>
+                              @for (v of valoresUnicos('presidente'); track v) {
+                                <button (click)="setFiltroCol('presidente', v)"
+                                  class="w-full text-left px-2 py-1.5 text-xs hover:bg-blue-50 rounded truncate"
+                                  [class.bg-blue-50]="colFiltros()['presidente'] === v"
+                                  [class.text-blue-700]="colFiltros()['presidente'] === v">{{ v }}</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </th>
+
                   <th class="px-3 py-2.5 whitespace-nowrap">Teléfono</th>
+
                 </tr>
               </thead>
               <tbody>
-                @for (o of organizaciones(); track o.id) {
-                  <tr class="border-b border-slate-100 hover:bg-slate-50">
-                    <td class="px-3 py-2.5 font-semibold text-slate-800 whitespace-nowrap">{{ o.nombre }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.tipo?.nombre }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.zona?.nombre }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.colonia_sector || '—' }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.fecha_inscripcion | date:'dd/MM/yyyy' }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.tomo || '—' }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">{{ o.folio || '—' }}</td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">
-                      <span
-                        class="px-2 py-0.5 rounded-full font-semibold"
+                @for (o of organizacionesFiltradas(); track o.id) {
+                  <tr class="border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                      [class.bg-blue-100]="filaSeleccionada()?.id === o.id"
+                      (click)="seleccionarFila(o, $event)">
+                    <td class="px-3 py-2 font-semibold text-slate-800">{{ o.nombre }}</td>
+                    <td class="px-3 py-2 text-slate-600">{{ o.tipo?.nombre }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">{{ o.zona?.nombre }}</td>
+                    <td class="px-3 py-2">{{ o.colonia_sector || '—' }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">{{ o.fecha_inscripcion | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">{{ o.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-3 py-2">{{ o.tomo || '—' }}</td>
+                    <td class="px-3 py-2">{{ o.folio || '—' }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">
+                      <span class="px-2 py-0.5 rounded-full font-semibold text-[10px]"
                         [class.bg-green-50]="o.estado === 'activa'"
                         [class.text-green-700]="o.estado === 'activa'"
                         [class.bg-amber-50]="o.estado === 'proxima_vencer'"
                         [class.text-amber-700]="o.estado === 'proxima_vencer'"
                         [class.bg-red-50]="o.estado === 'vencida'"
-                        [class.text-red-700]="o.estado === 'vencida'"
-                      >
+                        [class.text-red-700]="o.estado === 'vencida'">
                         {{ textoEstado(o) }}
                       </span>
                     </td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">
+                    <td class="px-3 py-2">
                       @if (presidente(o)) {
                         {{ presidente(o).nombre_completo }}
                       } @else {
                         <span class="text-slate-400">—</span>
                       }
                     </td>
-                    <td class="px-3 py-2.5 whitespace-nowrap">
-                      {{ presidente(o)?.telefono_personal || '—' }}
-                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap">{{ presidente(o)?.telefono_personal || '—' }}</td>
                   </tr>
                 }
               </tbody>
@@ -271,6 +374,24 @@
           }
         </div>
 
+
+        <!-- Barra flotante al seleccionar fila -->
+        @if (filaSeleccionada()) {
+          <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4 print:hidden"
+               (click)="$event.stopPropagation()">
+            <div class="text-xs font-semibold truncate max-w-64">📋 {{ filaSeleccionada().nombre }}</div>
+            <div class="w-px h-6 bg-white/20"></div>
+            @if (tienDirectiva()) {
+              <button (click)="imprimirCertificado()" [disabled]="generandoCert()"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white transition disabled:opacity-60 whitespace-nowrap">
+                {{ generandoCert() ? '⏳ Generando...' : '🖨️ Imprimir Certificado' }}
+              </button>
+            } @else {
+              <span class="text-xs text-white/50 italic whitespace-nowrap">⚠️ Sin directiva — no se puede certificar</span>
+            }
+            <button (click)="deseleccionar()" class="text-white/50 hover:text-white text-lg leading-none ml-1">✕</button>
+          </div>
+        }
       </div>
     </div>
   </div>

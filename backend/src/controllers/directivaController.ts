@@ -8,7 +8,6 @@ import AutorizacionReeleccion from '../models/AutorizacionReeleccion';
 import { registrarBitacora, obtenerIp } from '../services/loggerService';
 import sequelize from '../config/db';
 
-// Helper para convertir parámetros de ruta (string | string[]) a número
 const parseIdParam = (param: string | string[]): number => {
   const str = Array.isArray(param) ? param[0] : param;
   const num = parseInt(str, 10);
@@ -16,19 +15,10 @@ const parseIdParam = (param: string | string[]): number => {
   return num;
 };
 
-// Helper para extraer el mensaje del trigger SIGNAL SQLSTATE '45000'
-// cuando Sequelize lanza un error de validación de MySQL
 const mensajeSql = (err: any): string => {
   return err.original?.sqlMessage || err.message || 'Error desconocido';
 };
 
-// Asignar un nuevo miembro a la directiva
-// El trigger trg_validar_directiva_ins (en MySQL) valida automáticamente:
-//  - máximo 9 miembros activos por organización
-//  - conflicto patronato / junta de agua por DNI (la misma persona no
-//    puede estar activa en organizaciones de ambas categorías)
-//  - límite de 2 períodos como presidente (salvo autorización especial
-//    activa del Jefe de Desarrollo Comunitario)
 export const asignarMiembro = async (req: AuthRequest, res: Response) => {
   try {
     const { id_organizacion, id_cargo, nombre_completo, dni, telefono_personal, fecha_inicio } = req.body;
@@ -41,9 +31,6 @@ export const asignarMiembro = async (req: AuthRequest, res: Response) => {
 
     let id_autorizacion = null;
 
-    // Si la persona ya cumplió 2 períodos como presidente y el Jefe de
-    // Desarrollo Comunitario emitió una autorización especial activa para
-    // esta organización, la vinculamos al nuevo registro.
     if (cargo.es_presidente) {
       const autorizacion = await AutorizacionReeleccion.findOne({
         where: { dni, id_organizacion, activa: true }
@@ -64,12 +51,10 @@ export const asignarMiembro = async (req: AuthRequest, res: Response) => {
       id_autorizacion_reeleccion: id_autorizacion
     });
 
-    // Si se usó una autorización especial, marcarla como usada
     if (id_autorizacion) {
       await AutorizacionReeleccion.update({ activa: false }, { where: { id: id_autorizacion } });
     }
 
-    // Registrar en historial de presidentes
     if (cargo.es_presidente) {
       const org = await Organizacion.findByPk(id_organizacion);
       if (org) {
@@ -88,7 +73,6 @@ export const asignarMiembro = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Bitácora
     await registrarBitacora(
       req.usuario!.id,
       'directiva_miembros',
@@ -100,13 +84,10 @@ export const asignarMiembro = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(miembro);
   } catch (err: any) {
-    // Si el error viene de un trigger (SIGNAL SQLSTATE '45000'), el mensaje
-    // ya está en español y listo para mostrar al usuario tal cual.
     res.status(400).json({ msg: mensajeSql(err) });
   }
 };
 
-// Listar directiva activa de una organización
 export const listarDirectiva = async (req: AuthRequest, res: Response) => {
   try {
     const idOrgParam = req.params.id_organizacion;
@@ -122,15 +103,6 @@ export const listarDirectiva = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ── Renovar toda la directiva ───────────────────────────────
-// Usa el procedimiento renovar_directiva (ya existente en la BD), que:
-//  - copia la directiva actual a directiva_historial (con motivo_cambio)
-//  - cierra el período abierto en historial_presidentes
-//  - libera autorizaciones de reelección activas
-//  - desactiva (activo=0) la directiva actual
-//  - registra en bitácora (CAMBIO_DIRECTIVA)
-// Luego inserta los nuevos miembros uno por uno; cada inserción pasa por
-// el trigger trg_validar_directiva_ins (mismas validaciones de arriba).
 export const renovarDirectiva = async (req: AuthRequest, res: Response) => {
   try {
     const { id_organizacion, miembros, motivo } = req.body;
@@ -138,12 +110,10 @@ export const renovarDirectiva = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ msg: 'Faltan datos: id_organizacion y miembros (array)' });
     }
 
-    // 1) Archivar directiva actual (procedimiento ya existente en la BD)
     await sequelize.query('CALL renovar_directiva(?, ?, ?)', {
       replacements: [id_organizacion, req.usuario!.id, motivo || 'Renovación periódica']
     });
 
-    // 2) Insertar la nueva directiva
     const org = await Organizacion.findByPk(id_organizacion);
     const nuevosMiembros = [];
 
@@ -176,7 +146,6 @@ export const renovarDirectiva = async (req: AuthRequest, res: Response) => {
         await AutorizacionReeleccion.update({ activa: false }, { where: { id: id_autorizacion } });
       }
 
-      // Si es presidente, registrar nuevo período en historial_presidentes
       if (cargo?.es_presidente && org) {
         const periodos = await HistorialPresidente.count({ where: { dni: m.dni, id_organizacion } });
         await HistorialPresidente.create({
@@ -199,14 +168,6 @@ export const renovarDirectiva = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ── Actualizar (corregir) un miembro existente ──────────────
-// - Si NO cambia el DNI: corrección directa (nombre, teléfono, fecha_inicio).
-//   No pasa por el trigger porque no afecta conflicto patronato/junta de
-//   agua ni el límite de presidente (ambos dependen del DNI).
-// - Si cambia el DNI: el miembro actual se desactiva y se crea uno nuevo
-//   con el DNI corregido, para que el trigger trg_validar_directiva_ins
-//   valide el nuevo DNI (conflicto patronato/junta de agua, límite de
-//   presidente, máximo 9 miembros).
 export const actualizarMiembro = async (req: AuthRequest, res: Response) => {
   try {
     const id = parseIdParam(req.params.id);
@@ -216,7 +177,6 @@ export const actualizarMiembro = async (req: AuthRequest, res: Response) => {
     const { nombre_completo, dni, telefono_personal, fecha_inicio } = req.body;
 
     if (dni && dni !== miembro.dni) {
-      // El DNI cambió: desactivar el actual y crear uno nuevo (pasa por el trigger)
       const dniAnterior = miembro.dni;
       await miembro.update({ activo: false });
 
@@ -242,8 +202,6 @@ export const actualizarMiembro = async (req: AuthRequest, res: Response) => {
           id_autorizacion_reeleccion: id_autorizacion
         });
       } catch (errCreate: any) {
-        // Si el trigger bloquea el nuevo DNI, revertir la desactivación
-        // del miembro original para no dejar el registro sin directiva
         await miembro.update({ activo: true });
         throw errCreate;
       }
@@ -257,14 +215,13 @@ export const actualizarMiembro = async (req: AuthRequest, res: Response) => {
         'directiva_miembros',
         'EDITAR',
         nuevo.id,
-        `DNI corregido en organización ${miembro.id_organizacion}: ${dniAnterior} → ${dni} (${nombre_completo ?? miembro.nombre_completo})`,
+        `DNI corregido en organización ${miembro.id_organizacion}: ${dniAnterior} → ${dni}`,
         obtenerIp(req)
       );
 
       return res.json(nuevo);
     }
 
-    // Sin cambio de DNI: corrección simple (nombre, teléfono, fecha)
     const updates: any = {};
     if (nombre_completo !== undefined) updates.nombre_completo = nombre_completo;
     if (telefono_personal !== undefined) updates.telefono_personal = telefono_personal;
@@ -287,7 +244,6 @@ export const actualizarMiembro = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Desactivar un miembro específico (por ID)
 export const desactivarMiembro = async (req: AuthRequest, res: Response) => {
   try {
     const id = parseIdParam(req.params.id);
@@ -305,5 +261,46 @@ export const desactivarMiembro = async (req: AuthRequest, res: Response) => {
     res.json({ msg: 'Miembro desactivado' });
   } catch (err: any) {
     res.status(500).json({ msg: 'Error al desactivar miembro', error: err.message });
+  }
+};
+
+// ── Buscar presidente activo por DNI ────────────────────────
+// Usado por el formulario de autorizaciones especiales para
+// autocompletar nombre y organización al ingresar el DNI.
+// Busca en directiva_miembros con id_cargo=1 (Presidente) y activo=true.
+export const buscarPorDni = async (req: AuthRequest, res: Response) => {
+  try {
+    const { dni } = req.params;
+
+    const miembro = await DirectivaMiembro.findOne({
+      where: { dni, activo: true, id_cargo: 1 },
+      include: [
+        {
+          model: Organizacion,
+          as: 'organizacion',
+          attributes: ['id', 'nombre']
+        },
+        {
+          model: CargoDirectiva,
+          as: 'cargo',
+          attributes: ['nombre']
+        }
+      ]
+    });
+
+    if (!miembro) {
+      return res.status(404).json({
+        msg: 'No se encontró un presidente activo con ese DNI'
+      });
+    }
+
+    res.json({
+      nombre_completo: miembro.nombre_completo,
+      id_organizacion: (miembro as any).organizacion?.id,
+      nombre_organizacion: (miembro as any).organizacion?.nombre,
+      cargo: (miembro as any).cargo?.nombre
+    });
+  } catch (err: any) {
+    res.status(500).json({ msg: 'Error al buscar por DNI', error: err.message });
   }
 };

@@ -8,6 +8,7 @@ import { OrganizacionesEditar } from './pages/organizaciones-editar/organizacion
 import { Alertas } from './pages/alertas/alertas';
 import { OrganizacionesLista } from './pages/organizaciones-lista/organizaciones-lista';
 import { HistorialDirectivas } from './pages/historial-directivas/historial-directivas';
+import { Autorizaciones } from './pages/autorizaciones/autorizaciones';
 import { authGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
@@ -21,4 +22,5 @@ export const routes: Routes = [
   { path: 'alertas', component: Alertas, canActivate: [authGuard] },
   { path: 'organizaciones-lista', component: OrganizacionesLista, canActivate: [authGuard] },
   { path: 'historial-directivas', component: HistorialDirectivas, canActivate: [authGuard] },
+  { path: 'autorizaciones', component: Autorizaciones, canActivate: [authGuard] },
 ];

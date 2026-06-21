@@ -19,7 +19,6 @@ export class DirectivaService {
     return this.http.put<any>(`${this.apiUrl}/miembros/${id}`, datos);
   }
 
-  // Desactivar (quitar) un miembro de la directiva activa
   desactivarMiembro(id: number) {
     return this.http.delete<any>(`${this.apiUrl}/miembros/${id}`);
   }
@@ -30,5 +29,11 @@ export class DirectivaService {
       miembros,
       motivo
     });
+  }
+
+  // Buscar presidente activo por DNI para autocompletar formulario
+  // de autorización especial
+  buscarPorDni(dni: string) {
+    return this.http.get<any>(`${this.apiUrl}/buscar-por-dni/${dni}`);
   }
 }
