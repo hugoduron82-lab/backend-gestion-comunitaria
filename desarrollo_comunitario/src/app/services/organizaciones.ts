@@ -20,7 +20,7 @@ interface FiltrosReporte {
 
 @Injectable({ providedIn: 'root' })
 export class OrganizacionesService {
-  private apiUrl = 'http://localhost:3001/api/organizaciones';
+  private apiUrl = 'http://localhost:5000/api/organizaciones';
 
   constructor(private http: HttpClient) {}
 

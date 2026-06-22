@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogosService {
-  private apiUrl = 'http://localhost:3001/api/catalogos';
+  private apiUrl = 'http://localhost:5000/api/catalogos';
 
   constructor(private http: HttpClient) {}
 

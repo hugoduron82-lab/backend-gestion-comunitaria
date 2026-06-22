@@ -10,7 +10,7 @@ interface FiltrosHistorial {
 
 @Injectable({ providedIn: 'root' })
 export class HistorialService {
-  private apiUrl = 'http://localhost:3001/api/historial-directivas';
+  private apiUrl = 'http://localhost:5000/api/historial-directivas';
 
   constructor(private http: HttpClient) {}
 

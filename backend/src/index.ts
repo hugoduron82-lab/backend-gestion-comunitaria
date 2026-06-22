@@ -27,6 +27,7 @@ import Renovacion from './models/Renovacion';
 import DirectivaHistorial from './models/DirectivaHistorial';
 import historialRoutes from './routes/historialRoutes';
 import AutorizacionReeleccion from './models/AutorizacionReeleccion';
+import configuracionRoutes from './routes/configuracionRoutes';
 
 Bitacora.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 Usuario.belongsTo(Rol, { foreignKey: 'id_rol', as: 'rol' });
@@ -51,6 +52,7 @@ app.use('/api/certificaciones', certificacionRoutes);
 app.use('/api/bitacora', bitacoraRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/historial-directivas', historialRoutes);
+app.use('/api/configuracion', configuracionRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend funcionando - Documentación en /api-docs');

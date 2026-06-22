@@ -30,4 +30,5 @@ export const routes: Routes = [
   { path: 'usuarios', component: UsuariosComponent, canActivate: [authGuard] },
   { path: 'usuarios/nuevo', component: UsuarioFormComponent, canActivate: [authGuard] },
   { path: 'usuarios/editar/:id', component: UsuarioFormComponent, canActivate: [authGuard] },
+  {path: 'configuracion', loadComponent: () => import('./pages/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)}
 ];
