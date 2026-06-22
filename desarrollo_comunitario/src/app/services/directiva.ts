@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class DirectivaService {
-  private apiUrl = 'http://localhost:5000/api/directiva';
+  private apiUrl = 'http://localhost:3001/api/directiva';
 
   constructor(private http: HttpClient) {}
 

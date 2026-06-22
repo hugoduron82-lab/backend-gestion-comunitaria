@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 // Cualquier componente que lo inyecte obtiene el mismo conteo de alertas.
 @Injectable({ providedIn: 'root' })
 export class BadgeAlertasService {
-  private apiUrl = 'http://localhost:5000/api/organizaciones/alertas';
+  private apiUrl = 'http://localhost:3001/api/organizaciones/alertas';
   totalAlertas = signal(0);
   private cargado = false;
 

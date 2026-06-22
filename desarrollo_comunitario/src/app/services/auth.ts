@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class Auth {
   // ⚠️ Verifica el puerto en tu archivo .env real
-  private apiUrl = 'http://localhost:5000/api/auth';
+  private apiUrl = 'http://localhost:3001/api/auth';
 
   constructor(private http: HttpClient) {}
 

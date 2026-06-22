@@ -10,6 +10,9 @@ import { OrganizacionesLista } from './pages/organizaciones-lista/organizaciones
 import { HistorialDirectivas } from './pages/historial-directivas/historial-directivas';
 import { Autorizaciones } from './pages/autorizaciones/autorizaciones';
 import { authGuard } from './guards/auth-guard';
+// Importar los nuevos componentes
+import { UsuariosComponent } from './pages/usuarios/usuarios.component'; // 👈 Importar
+import { UsuarioFormComponent } from './pages/usuario-form/usuario-form.component'; // 👈 Importar (si lo tienes)
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -23,4 +26,8 @@ export const routes: Routes = [
   { path: 'organizaciones-lista', component: OrganizacionesLista, canActivate: [authGuard] },
   { path: 'historial-directivas', component: HistorialDirectivas, canActivate: [authGuard] },
   { path: 'autorizaciones', component: Autorizaciones, canActivate: [authGuard] },
+  // Nuevas rutas de usuarios
+  { path: 'usuarios', component: UsuariosComponent, canActivate: [authGuard] },
+  { path: 'usuarios/nuevo', component: UsuarioFormComponent, canActivate: [authGuard] },
+  { path: 'usuarios/editar/:id', component: UsuarioFormComponent, canActivate: [authGuard] },
 ];
