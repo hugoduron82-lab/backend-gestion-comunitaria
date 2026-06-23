@@ -4,8 +4,8 @@ import Organizacion from '../models/Organizacion';
 import Zona from '../models/Zona';
 import TipoOrganizacion from '../models/TipoOrganizacion';
 import Configuracion from '../models/Configuracion';
-import Renovacion from '../models/Renovacion';
 import DirectivaMiembro from '../models/DirectivaMiembro';
+import CargoDirectiva from '../models/CargoDirectiva';
 import { registrarBitacora, obtenerIp } from '../services/loggerService';
 import { Op } from 'sequelize';
 import sequelize from '../config/db';
@@ -57,6 +57,7 @@ export const crearOrganizacion = async (req: AuthRequest, res: Response) => {
 };
 
 // ── Listado con filtros y paginación ────────────────────────
+// Acepta: ?pagina=1&porPagina=12&zona=3&estado=activa&tipo=2&categoria=patronato&busqueda=texto
 export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -69,6 +70,7 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
 
     const where: any = {};
 
+    // Por defecto excluye inactivas, salvo que se pida un estado explícito
     if (!estado || estado === 'todos') {
       where.estado = { [Op.ne]: 'inactiva' };
     } else {
@@ -78,10 +80,12 @@ export const listarOrganizaciones = async (req: AuthRequest, res: Response) => {
     if (zona) where.id_zona = parseInt(zona as string, 10);
     if (tipo) where.id_tipo = parseInt(tipo as string, 10);
 
+    // Búsqueda por nombre (LIKE)
     if (busqueda) {
       where.nombre = { [Op.like]: `%${busqueda}%` };
     }
 
+    // Filtro por categoría (patronato / junta_agua) — va sobre la tabla relacionada
     const tipoInclude: any = {
       model: TipoOrganizacion,
       as: 'tipo',
@@ -158,54 +162,6 @@ export const actualizarOrganizacion = async (req: AuthRequest, res: Response) =>
   }
 };
 
-export const renovarOrganizacion = async (req: AuthRequest, res: Response) => {
-  try {
-    const id = parseIdParam(req.params.id);
-    const org = await Organizacion.findByPk(id);
-    if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
-
-    const { fecha_vencimiento_nueva, tomo_nuevo, folio_nuevo, observaciones } = req.body;
-    if (!fecha_vencimiento_nueva) {
-      return res.status(400).json({ msg: 'fecha_vencimiento_nueva es requerida' });
-    }
-
-    const fechaAnt = org.fecha_vencimiento;
-    const fechaNueva = new Date(fecha_vencimiento_nueva);
-
-    await Renovacion.create({
-      id_organizacion: id,
-      fecha_renovacion: new Date(),
-      fecha_vencimiento_ant: fechaAnt,
-      fecha_vencimiento_nueva: fechaNueva,
-      tomo_nuevo,
-      folio_nuevo,
-      observaciones,
-      registrado_por: req.usuario!.id
-    });
-
-    const nuevoEstado = await calcularEstado(fechaNueva);
-    const updates: any = { fecha_vencimiento: fechaNueva, estado: nuevoEstado };
-    if (tomo_nuevo) updates.tomo = tomo_nuevo;
-    if (folio_nuevo) updates.folio = folio_nuevo;
-    await org.update(updates);
-    await org.reload();
-
-    await registrarBitacora(
-      req.usuario!.id,
-      'organizaciones',
-      'RENOVAR',
-      org.id,
-      `Organización renovada: ${org.nombre}. Nueva vigencia: ${fechaNueva.toLocaleDateString()}`,
-      obtenerIp(req)
-    );
-
-    res.json(org);
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ msg: 'Error al renovar organización', error: err.message });
-  }
-};
-
 export const eliminarOrganizacion = async (req: AuthRequest, res: Response) => {
   try {
     const id = parseIdParam(req.params.id);
@@ -237,80 +193,174 @@ export const obtenerDashboard = async (req: AuthRequest, res: Response) => {
   }
 };
 
+
+// ── Alertas de vencimiento ────────────────────────────────────────────────
 export const obtenerAlertas = async (req: AuthRequest, res: Response) => {
   try {
-    const baseInclude = [
-      { model: Zona, as: 'zona', attributes: ['id', 'nombre'] },
-      { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria'] },
-      {
-        model: DirectivaMiembro,
-        as: 'directiva',
-        where: { id_cargo: 1, activo: true },
-        required: false,
-        attributes: ['nombre_completo', 'telefono_personal']
-      }
-    ];
+    const config = await Configuracion.findOne({ where: { clave: 'dias_alerta_vencimiento' } });
+    const diasAlerta = config ? parseInt(config.valor) : 30;
+    const hoy = new Date();
+    const limite = new Date();
+    limite.setDate(hoy.getDate() + diasAlerta);
 
-    const proximasVencer = await Organizacion.findAll({
-      where: { estado: 'proxima_vencer' },
-      include: baseInclude,
-      order: [['fecha_vencimiento', 'ASC']]
+    const todas = await Organizacion.findAll({
+      include: [
+        { model: Zona, as: 'zona', attributes: ['nombre'] },
+        { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre'] },
+        { model: DirectivaMiembro, as: 'directiva',
+          where: { id_cargo: 1, activo: true }, required: false,
+          attributes: ['nombre_completo', 'telefono_personal'] }
+      ]
     });
 
-    const vencidas = await Organizacion.findAll({
-      where: { estado: 'vencida' },
-      include: baseInclude,
-      order: [['fecha_vencimiento', 'ASC']]
+    const proximas_vencer = todas.filter((o: any) => {
+      const v = new Date(o.fecha_vencimiento);
+      return v >= hoy && v <= limite;
     });
 
-    res.json({ proximas_vencer: proximasVencer, vencidas });
+    const vencidas = todas.filter((o: any) => {
+      return new Date(o.fecha_vencimiento) < hoy;
+    });
+
+    res.json({ proximas_vencer, vencidas });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ msg: 'Error al obtener alertas', error: err.message });
   }
 };
 
-// ── Reporte de organizaciones (para regidores) ──────────────
-// Lista TODAS las organizaciones (sin paginación, pensado para imprimir),
-// incluyendo presidente y teléfono, con filtros por tipo y zona.
+// ── Reporte completo para listado ─────────────────────────────────────────
 export const listarReporte = async (req: AuthRequest, res: Response) => {
   try {
-    const { zona, tipo, categoria, busqueda } = req.query;
+    const { tipo, zona, categoria, busqueda } = req.query;
 
-    const where: any = { estado: { [Op.ne]: 'inactiva' } };
-    if (zona) where.id_zona = parseInt(zona as string, 10);
-    if (tipo) where.id_tipo = parseInt(tipo as string, 10);
+    const where: any = {};
+    if (tipo) where.id_tipo = Number(tipo);
+    if (zona) where.id_zona = Number(zona);
     if (busqueda) where.nombre = { [Op.like]: `%${busqueda}%` };
 
-    const tipoInclude: any = {
-      model: TipoOrganizacion,
-      as: 'tipo',
-      attributes: ['nombre', 'categoria']
-    };
-    if (categoria && categoria !== 'todos') {
-      tipoInclude.where = { categoria };
-      tipoInclude.required = true;
-    }
-
-    const organizaciones = await Organizacion.findAll({
+    const orgs = await Organizacion.findAll({
       where,
       include: [
-        { model: Zona, as: 'zona', attributes: ['id', 'nombre'] },
-        tipoInclude,
-        {
-          model: DirectivaMiembro,
-          as: 'directiva',
-          where: { id_cargo: 1, activo: true },
-          required: false,
-          attributes: ['nombre_completo', 'telefono_personal']
-        }
+        { model: Zona, as: 'zona', attributes: ['nombre'] },
+        { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria', 'vigencia_meses'] },
+        { model: DirectivaMiembro, as: 'directiva',
+          where: { id_cargo: 1, activo: true }, required: false,
+          attributes: ['nombre_completo', 'telefono_personal', 'id_cargo'] }
       ],
       order: [['nombre', 'ASC']]
     });
 
-    res.json(organizaciones);
+    const hoy = new Date();
+    const config = await Configuracion.findOne({ where: { clave: 'dias_alerta_vencimiento' } });
+    const diasAlerta = config ? parseInt(config.valor) : 30;
+
+    let resultado = orgs.map((o: any) => {
+      const v = new Date(o.fecha_vencimiento);
+      const diff = Math.ceil((v.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+      let estado = 'activa';
+      if (diff < 0) estado = 'vencida';
+      else if (diff <= diasAlerta) estado = 'proxima_vencer';
+      return { ...o.toJSON(), estado };
+    });
+
+    if (categoria && categoria !== 'todos') {
+      resultado = resultado.filter((o: any) => o.tipo?.categoria === categoria);
+    }
+
+    res.json(resultado);
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ msg: 'Error al obtener reporte de organizaciones', error: err.message });
+    res.status(500).json({ msg: 'Error al obtener reporte', error: err.message });
+  }
+};
+
+// ── Renovar vigencia ──────────────────────────────────────────────────────
+export const renovarOrganizacion = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseIdParam(req.params.id);
+    const { fecha_vencimiento_nueva, tomo_nuevo, folio_nuevo, observaciones } = req.body;
+
+    if (!fecha_vencimiento_nueva) {
+      return res.status(400).json({ msg: 'La nueva fecha de vencimiento es obligatoria' });
+    }
+
+    const org = await Organizacion.findByPk(id);
+    if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
+
+    const updateData: any = { fecha_vencimiento: fecha_vencimiento_nueva };
+    if (tomo_nuevo) updateData.tomo = tomo_nuevo;
+    if (folio_nuevo) updateData.folio = folio_nuevo;
+    if (observaciones) updateData.observaciones = observaciones;
+
+    await org.update(updateData);
+
+    await registrarBitacora(
+      req.usuario!.id, 'organizaciones', 'RENOVAR', org.id,
+      `Vigencia renovada hasta ${fecha_vencimiento_nueva}`,
+      obtenerIp(req)
+    );
+
+    res.json({ msg: 'Vigencia renovada correctamente', organizacion: org });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error al renovar vigencia', error: err.message });
+  }
+};
+
+// ── Datos para certificado ────────────────────────────────────────────────
+export const datosCertificado = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseIdParam(req.params.id);
+
+    const org = await Organizacion.findByPk(id, {
+      include: [
+        { model: Zona, as: 'zona', attributes: ['nombre'] },
+        { model: TipoOrganizacion, as: 'tipo', attributes: ['nombre', 'categoria', 'vigencia_meses'] }
+      ]
+    });
+    if (!org) return res.status(404).json({ msg: 'Organización no encontrada' });
+
+    const directiva = await DirectivaMiembro.findAll({
+      where: { id_organizacion: id, activo: true },
+      include: [{ model: CargoDirectiva, as: 'cargo', attributes: ['nombre', 'orden'] }],
+      order: [[{ model: CargoDirectiva, as: 'cargo' }, 'orden', 'ASC']]
+    });
+
+    if (directiva.length === 0) {
+      return res.status(400).json({ msg: 'La organización no tiene directiva activa registrada' });
+    }
+
+    const claves = ['nombre_institucion', 'cargo_firmante_pdf', 'nombre_firmante_pdf', 'correlativo_certificaciones'];
+    const configs = await Configuracion.findAll({ where: { clave: claves } });
+    const config: Record<string, string> = {};
+    configs.forEach((c: any) => { config[c.clave] = c.valor; });
+
+    const correlativoActual = parseInt(config['correlativo_certificaciones'] || '0');
+    const numeroCertificado = `CERT-${new Date().getFullYear()}-${String(correlativoActual + 1).padStart(4, '0')}`;
+
+    const configCorr = configs.find((c: any) => c.clave === 'correlativo_certificaciones');
+    if (configCorr) {
+      await (configCorr as any).update({ valor: String(correlativoActual + 1) });
+    }
+
+    await registrarBitacora(
+      req.usuario!.id, 'certificaciones', 'GENERAR_CERT', org.id,
+      `Certificado ${numeroCertificado} generado para ${org.nombre}`,
+      obtenerIp(req)
+    );
+
+    res.json({
+      organizacion: org,
+      directiva,
+      config,
+      numeroCertificado,
+      fechaGeneracion: new Date().toLocaleDateString('es-HN', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      })
+    });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error al obtener datos del certificado', error: err.message });
   }
 };

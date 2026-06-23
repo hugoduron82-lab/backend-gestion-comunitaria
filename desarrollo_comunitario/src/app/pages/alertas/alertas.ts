@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { OrganizacionesService } from '../../services/organizaciones';
+import { BadgeAlertasService } from '../../services/badge-alertas';
 
 @Component({
   selector: 'app-alertas',
@@ -14,7 +15,6 @@ import { OrganizacionesService } from '../../services/organizaciones';
 export class Alertas implements OnInit {
   usuario: any;
   sidebarAbierto = signal(false);
-
   proximasVencer = signal<any[]>([]);
   vencidas = signal<any[]>([]);
   cargando = signal(true);
@@ -22,7 +22,8 @@ export class Alertas implements OnInit {
   constructor(
     private auth: Auth,
     private router: Router,
-    private orgService: OrganizacionesService
+    private orgService: OrganizacionesService,
+    public badgeAlertas: BadgeAlertasService
   ) {
     this.usuario = this.auth.getUsuario();
   }
@@ -37,6 +38,10 @@ export class Alertas implements OnInit {
       next: (res) => {
         this.proximasVencer.set(res.proximas_vencer ?? []);
         this.vencidas.set(res.vencidas ?? []);
+        // Actualizar badge compartido con datos frescos
+        this.badgeAlertas.totalAlertas.set(
+          (res.proximas_vencer?.length ?? 0) + (res.vencidas?.length ?? 0)
+        );
         this.cargando.set(false);
       },
       error: (err) => {
@@ -60,12 +65,12 @@ export class Alertas implements OnInit {
     return Math.round((hoy.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // El backend incluye "directiva" como array (where id_cargo=1, activo=true)
   presidente(o: any): any {
     return o.directiva?.[0] ?? null;
   }
 
   esAdmin()    { return this.usuario?.id_rol === 1; }
+  esConsulta() { return this.usuario?.id_rol === 4; }
   esJefe()     { return this.usuario?.id_rol === 2; }
   esTecnico()  { return this.usuario?.id_rol === 3; }
 

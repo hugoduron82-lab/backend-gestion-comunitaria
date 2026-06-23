@@ -1,9 +1,14 @@
 <div class="flex h-screen overflow-hidden bg-slate-100">
 
+  <!-- Fondo oscuro al abrir el menú en móvil -->
   @if (sidebarAbierto()) {
-    <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
+    <div
+      class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+      (click)="sidebarAbierto.set(false)"
+    ></div>
   }
 
+  <!-- ============ SIDEBAR ============ -->
   <aside
     class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col shrink-0 transition-transform duration-200 lg:translate-x-0"
     [class.translate-x-0]="sidebarAbierto()"
@@ -51,14 +56,14 @@
         Organizaciones
       </a>
 
-      <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
+      <a routerLink="/historial-directivas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
         <span class="w-4 h-4 flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
           </svg>
         </span>
         Historial de Directivas
-      </div>
+      </a>
 
       <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
 
@@ -122,7 +127,7 @@
         <a routerLink="/configuracion" routerLinkActive="bg-amber-500 text-white" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
           <span class="w-4 h-4 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127c.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.767a1.123 1.123 0 0 0-.417 1.03c.004.074.006.148.006.22c0 .072-.002.146-.006.22a1.123 1.123 0 0 0 .417 1.03l1.003.767a1.125 1.125 0 0 1 .26 1.43l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.216-.456a1.125 1.125 0 0 0-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.646-.87a6.512 6.512 0 0 1-.22-.127a1.125 1.125 0 0 0-1.074-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .26-1.43l1.003-.767a1.122 1.122 0 0 0 .417-1.03a6.445 6.445 0 0 1-.006-.22c0-.072.002-.146.006-.22a1.122 1.122 0 0 0-.417-1.03l-1.003-.767a1.125 1.125 0 0 1-.26-1.43l1.296-2.247a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128c.332-.183.582-.495.644-.869l.214-1.28Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127c.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.767a1.123 1.123 0 0 0-.417 1.03c.004.074.006.148.006.22c0 .072-.002.146-.006.22a1.123 1.123 0 0 0 .417 1.03l1.003.767a1.125 1.125 0 0 1 .26 1.43l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.216-.456a1.125 1.125 0 0 0-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.646-.87 6.512 6.512 0 0 1-.22-.127 1.125 1.125 0 0 0-1.074-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .26-1.43l1.003-.767a1.122 1.122 0 0 0 .417-1.03 6.445 6.445 0 0 1-.006-.22c0-.072.002-.146.006-.22a1.122 1.122 0 0 0-.417-1.03l-1.003-.767a1.125 1.125 0 0 1-.26-1.43l1.296-2.247a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             </svg>
           </span>
@@ -137,7 +142,7 @@
         (click)="cerrarSesion()"
         class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition flex items-center justify-center gap-2"
       >
-        <span class="w-4 h-4 flex items-center justify-center">
+        <span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
           </svg>
@@ -148,143 +153,142 @@
 
   </aside>
 
+  <!-- ============ CONTENIDO PRINCIPAL ============ -->
   <div class="flex-1 flex flex-col overflow-hidden">
 
+    <!-- Barra superior FIJA -->
     <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
-        <button
-          (click)="sidebarAbierto.set(!sidebarAbierto())"
-          class="lg:hidden text-2xl text-slate-600 leading-none px-1"
-          aria-label="Abrir menú"
-        >
+        <button (click)="sidebarAbierto.set(!sidebarAbierto())" class="lg:hidden text-2xl text-slate-600 leading-none px-1"
+          aria-label="Abrir menú">
           ☰
         </button>
-        <div>
-          <h2 class="text-base font-bold text-slate-800">Historial de Directivas</h2>
-          <p class="text-xs text-slate-500">Registro de cambios de directiva por organización</p>
-        </div>
+        <h2 class="text-base font-bold text-slate-800">Gestión de Usuarios</h2>
       </div>
-      <a routerLink="/dashboard" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
-        ← Volver al dashboard
-      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-500 capitalize hidden sm:block">{{ fechaHoy }}</span>
+        @if (esAdmin() || esJefe() || esTecnico()) {
+          <button (click)="crearUsuario()"
+            class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
+            + Nuevo usuario
+          </button>
+        }
+      </div>
     </div>
 
+    <!-- Contenido con scroll propio -->
     <div class="flex-1 overflow-y-auto p-4 lg:p-7">
-      <div class="bg-white rounded-xl border border-slate-200 max-w-5xl mx-auto">
 
-        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-3 items-center">
-          <input
-            type="text"
-            [ngModel]="busqueda()"
-            (ngModelChange)="onBusquedaChange($event)"
-            placeholder="Buscar por nombre de organización..."
-            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-          />
-          <select
-            [ngModel]="filtroZona() ?? ''"
-            (ngModelChange)="onZonaChange($event)"
-            class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las zonas</option>
-            @for (z of zonas(); track z.id) {
-              <option [value]="z.id">{{ z.nombre }}</option>
-            }
-          </select>
-          @if (!cargando()) {
-            <span class="text-xs text-slate-400 ml-auto">{{ totalRegistros() }} evento(s)</span>
-          }
+      <!-- Filtros -->
+      <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-slate-700">Estado:</label>
+            <select class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="filtroActivo">
+              <option value="">Todos</option>
+              <option value="true">Activos</option>
+              <option value="false">Inactivos</option>
+            </select>
+          </div>
+          <button class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-slate-700 transition" (click)="aplicarFiltros()">Aplicar</button>
         </div>
+      </div>
 
-        <div class="p-4">
-          @if (cargando()) {
-            <p class="text-sm text-slate-400 text-center py-8">Cargando historial...</p>
-          } @else if (eventos().length === 0) {
-            <div class="text-center py-12 text-slate-400 font-medium">
-              No hay cambios de directiva registrados todavía.
+      <!-- Tabla de usuarios -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+
+        <div class="overflow-x-auto">
+          @if (loading) {
+            <div class="text-center py-8">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-amber-500"></div>
+              <p class="mt-2 text-sm text-slate-500">Cargando usuarios...</p>
+            </div>
+          } @else if (error) {
+            <div class="alert alert-danger m-4">{{ error }}</div>
+          } @else if (usuarios.length === 0) {
+            <div class="text-center py-12 text-slate-400">
+              <div class="text-3xl mb-2">👤</div>
+              No hay usuarios registrados.
             </div>
           } @else {
-            <div class="space-y-3">
-              @for (e of eventos(); track e.fecha_cambio + '-' + e.id_organizacion) {
-                <div class="border border-slate-200 rounded-xl p-4">
-                  <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
-                    <div>
-                      <div class="text-sm font-bold text-slate-800">{{ e.organizacion }}</div>
-                      <div class="text-xs text-slate-500">{{ e.zona }}</div>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-xs font-semibold text-slate-600">
-                        {{ e.fecha_cambio | date:'dd/MM/yyyy' }}
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">ID</th>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">N° Empleado</th>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">Correo</th>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">Rol</th>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">Estado</th>
+                  <th class="text-left py-3 px-4 font-semibold text-slate-600">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                @for (usuario of usuarios; track usuario.id) {
+                  <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 text-slate-600">{{ usuario.id }}</td>
+                    <td class="py-3 px-4 text-slate-600">{{ usuario.id_empleado }}</td>
+                    <td class="py-3 px-4 text-slate-600">{{ usuario.correo }}</td>
+                    <td class="py-3 px-4 text-slate-600">{{ usuario.rol?.nombre || 'Sin rol' }}</td>
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            [class.bg-green-100]="usuario.activo"
+                            [class.text-green-800]="usuario.activo"
+                            [class.bg-red-100]="!usuario.activo"
+                            [class.text-red-800]="!usuario.activo">
+                        {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex gap-2">
+                        <button class="text-xs font-semibold px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition" (click)="editarUsuario(usuario.id)">Editar</button>
+                        <button class="text-xs font-semibold px-3 py-1 rounded-lg"
+                                [class.bg-red-50]="usuario.activo"
+                                [class.text-red-700]="usuario.activo"
+                                [class.bg-green-50]="!usuario.activo"
+                                [class.text-green-700]="!usuario.activo"
+                                (click)="toggleEstado(usuario)">
+                          {{ usuario.activo ? 'Desactivar' : 'Reactivar' }}
+                        </button>
                       </div>
-                      <div class="text-xs text-slate-400">
-                        {{ e.totalMiembrosSalientes }} miembro(s) renovado(s)
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                    <div class="bg-slate-50 rounded-lg p-3">
-                      <div class="text-[10px] font-bold uppercase text-slate-400 mb-1">Presidente saliente</div>
-                      @if (e.presidenteSaliente) {
-                        <div class="text-sm font-semibold text-slate-700">{{ e.presidenteSaliente.nombre_completo }}</div>
-                        @if (e.presidenteSaliente.dni) {
-                          <div class="text-xs text-slate-400">DNI: {{ e.presidenteSaliente.dni }}</div>
-                        }
-                      } @else {
-                        <div class="text-sm text-slate-400">Sin cambio de presidente en este evento</div>
-                      }
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-3">
-                      <div class="text-[10px] font-bold uppercase text-green-600 mb-1">Presidente actual</div>
-                      @if (e.presidenteEntrante) {
-                        <div class="text-sm font-semibold text-slate-700">{{ e.presidenteEntrante.nombre_completo }}</div>
-                        @if (e.presidenteEntrante.dni) {
-                          <div class="text-xs text-slate-400">DNI: {{ e.presidenteEntrante.dni }}</div>
-                        }
-                      } @else {
-                        <div class="text-sm text-slate-400">Sin presidente registrado actualmente</div>
-                      }
-                    </div>
-                  </div>
-
-                  @if (e.motivo) {
-                    <div class="text-xs text-slate-500 mt-3">
-                      <span class="font-semibold">Motivo:</span> {{ e.motivo }}
-                    </div>
-                  }
-                  @if (e.registrado_por) {
-                    <div class="text-xs text-slate-400 mt-1">
-                      Registrado por {{ e.registrado_por }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            @if (totalPaginas() > 1) {
-              <div class="flex justify-center items-center gap-2 mt-5">
-                <button
-                  (click)="irPagina(paginaActual() - 1)"
-                  [disabled]="paginaActual() === 1"
-                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
-                >
-                  ← Anterior
-                </button>
-                <span class="text-xs text-slate-500 px-2">
-                  Página {{ paginaActual() }} de {{ totalPaginas() }}
-                </span>
-                <button
-                  (click)="irPagina(paginaActual() + 1)"
-                  [disabled]="paginaActual() === totalPaginas()"
-                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
-                >
-                  Siguiente →
-                </button>
-              </div>
-            }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
         </div>
 
+        <!-- Paginación (se muestra solo si hay más de una página) -->
+        @if (!loading && totalPaginas > 1) {
+          <div class="flex justify-between items-center px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <span class="text-sm text-slate-500">
+              Mostrando {{ (paginaActual - 1) * limite + 1 }} -
+              {{ Math.min(paginaActual * limite, totalUsuarios) }} de {{ totalUsuarios }} usuarios
+            </span>
+            <div class="flex gap-1">
+              <button class="px-3 py-1 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition disabled:opacity-40"
+                      [disabled]="paginaActual === 1"
+                      (click)="irPagina(paginaActual - 1)">
+                Anterior
+              </button>
+              @for (p of [].constructor(totalPaginas); track p; let i = $index) {
+                <button class="px-3 py-1 text-sm rounded-lg border border-slate-200 hover:bg-slate-100 transition"
+                        [class.bg-slate-800]="paginaActual === i + 1"
+                        [class.text-white]="paginaActual === i + 1"
+                        (click)="irPagina(i + 1)">
+                  {{ i + 1 }}
+                </button>
+              }
+              <button class="px-3 py-1 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition disabled:opacity-40"
+                      [disabled]="paginaActual === totalPaginas"
+                      (click)="irPagina(paginaActual + 1)">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        }
       </div>
+
     </div>
   </div>
 

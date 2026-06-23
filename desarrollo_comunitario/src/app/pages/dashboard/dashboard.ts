@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { OrganizacionesService } from '../../services/organizaciones';
 import { CatalogosService } from '../../services/catalogos';
+import { BadgeAlertasService } from '../../services/badge-alertas';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,37 +16,31 @@ import { CatalogosService } from '../../services/catalogos';
 export class Dashboard implements OnInit {
   usuario: any;
   fechaHoy = '';
-
-  // Menú lateral (móvil)
+  dropdownEstadoAbierto = signal(false);
   sidebarAbierto = signal(false);
-
-  // Tarjetas y contadores globales
   stats = signal<any>(null);
   cargandoStats = signal(true);
-
-  // Listado paginado
   organizaciones = signal<any[]>([]);
   zonas = signal<any[]>([]);
   cargandoOrgs = signal(true);
-
   paginaActual = signal(1);
   totalPaginas = signal(1);
   totalRegistros = signal(0);
   porPagina = 12;
-
-  // Filtros activos
   filtroSemaforo = signal('todos');
   filtroCategoria = signal('todos');
-  filtroZona = signal<number | null>(null);
+  
+  // Se cambia a filtroZone para mantener consistencia exacta con el HTML modificado
+  filtroZone = signal<number | null>(null); 
   busqueda = signal('');
-
   private timeoutBusqueda: any;
 
   constructor(
     private auth: Auth,
     private router: Router,
     private orgService: OrganizacionesService,
-    private catalogosService: CatalogosService
+    private catalogosService: CatalogosService,
+    public badgeAlertas: BadgeAlertasService
   ) {
     this.usuario = this.auth.getUsuario();
   }
@@ -54,21 +49,16 @@ export class Dashboard implements OnInit {
     this.fechaHoy = new Date().toLocaleDateString('es-HN', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
-
     this.cargarStats();
     this.cargarOrganizaciones();
     this.cargarZonas();
   }
 
-cargarStats() {
+  cargarStats() {
     this.orgService.obtenerDashboard().subscribe({
       next: (res) => {
         const data = Array.isArray(res) ? res[0] : res;
-        // La vista v_dashboard_stats devuelve columnas DECIMAL, que
-        // MySQL/Sequelize entregan como string. Se convierten a number
-        // para que las sumas (ej. badge de Alertas) funcionen aritméticamente
-        // y no como concatenación de texto.
-        this.stats.set({
+        const stats = {
           ...data,
           total_organizaciones: Number(data.total_organizaciones),
           total_activas: Number(data.total_activas),
@@ -76,7 +66,12 @@ cargarStats() {
           total_vencidas: Number(data.total_vencidas),
           total_patronatos: Number(data.total_patronatos),
           total_juntas_agua: Number(data.total_juntas_agua),
-        });
+        };
+        this.stats.set(stats);
+        
+        this.badgeAlertas.totalAlertas.set(
+          stats.total_proximas_vencer + stats.total_vencidas
+        );
         this.cargandoStats.set(false);
       },
       error: (err) => {
@@ -88,17 +83,35 @@ cargarStats() {
 
   cargarOrganizaciones() {
     this.cargandoOrgs.set(true);
-
     this.orgService.listar({
       pagina: this.paginaActual(),
       porPagina: this.porPagina,
       estado: this.filtroSemaforo(),
       categoria: this.filtroCategoria(),
-      zona: this.filtroZona(),
+      zona: this.filtroZone(),
       busqueda: this.busqueda()
     }).subscribe({
       next: (res) => {
-        this.organizaciones.set(res.data ?? []);
+        const datosOriginales = res.data ?? [];
+
+        // Ordenamos las tarjetas por prioridad: 
+        // 1. Próximas a vencer (Amarillas)
+        // 2. Vencidas (Rojas)
+        // 3. Activas (Verdes)
+        const datosOrdenados = [...datosOriginales].sort((a, b) => {
+          const orden: { [key: string]: number } = {
+            'proxima_vencer': 1,
+            'vencida': 2,
+            'activa': 3
+          };
+
+          const prioridadA = orden[a.estado] || 4;
+          const prioridadB = orden[b.estado] || 4;
+
+          return prioridadA - prioridadB;
+        });
+
+        this.organizaciones.set(datosOrdenados);
         this.totalPaginas.set(res.totalPaginas ?? 1);
         this.totalRegistros.set(res.total ?? 0);
         this.cargandoOrgs.set(false);
@@ -130,7 +143,7 @@ cargarStats() {
   }
 
   onZonaChange(valor: string) {
-    this.filtroZona.set(valor ? parseInt(valor, 10) : null);
+    this.filtroZone.set(valor ? parseInt(valor, 10) : null);
     this.paginaActual.set(1);
     this.cargarOrganizaciones();
   }
@@ -150,35 +163,11 @@ cargarStats() {
     this.cargarOrganizaciones();
   }
 
-  contarSemaforo(valor: string): number {
-    const s = this.stats();
-    if (!s) return 0;
-    switch (valor) {
-      case 'todos': return s.total_organizaciones ?? 0;
-      case 'activa': return s.total_activas ?? 0;
-      case 'proxima_vencer': return s.total_proximas_vencer ?? 0;
-      case 'vencida': return s.total_vencidas ?? 0;
-      default: return 0;
-    }
-  }
-
-  contarCategoria(valor: string): number {
-    const s = this.stats();
-    if (!s) return 0;
-    switch (valor) {
-      case 'todos': return s.total_organizaciones ?? 0;
-      case 'patronato': return s.total_patronatos ?? 0;
-      case 'junta_agua': return s.total_juntas_agua ?? 0;
-      default: return 0;
-    }
-  }
-
   diasParaVencer(o: any): number {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const venc = new Date(o.fecha_vencimiento);
-    const diffMs = venc.getTime() - hoy.getTime();
-    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return Math.round((venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   textoVigencia(o: any): string {
@@ -210,4 +199,10 @@ cargarStats() {
     this.auth.logout();
     this.router.navigate(['/login']);
   }
+
+  seleccionarEstado(valor: string) {
+  this.setSemaforo(valor);
+  this.dropdownEstadoAbierto.set(false); // Esto cierra el menú al hacer clic en una opción
+}
+
 }
