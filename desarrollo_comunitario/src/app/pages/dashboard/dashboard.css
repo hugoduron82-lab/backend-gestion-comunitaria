@@ -1,0 +1,7 @@
+/* Busca la clase que controla el texto de la vigencia y déjala así */
+.tu-clase-de-vigencia {
+  background: none !important; /* Quita el fondo por completo */
+  padding: 0;                  /* Elimina el relleno innecesario */
+  font-weight: 600;            /* Mantiene el texto visible y firme */
+  /* El color ya lo manejará dinámicamente tu HTML según el estado */
+}

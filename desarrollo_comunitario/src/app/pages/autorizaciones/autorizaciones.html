@@ -5,7 +5,6 @@
     <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" (click)="sidebarAbierto.set(false)"></div>
   }
 
-  <!-- ============ MODAL: Nueva autorización ============ -->
   @if (mostrarFormulario()) {
     <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-xl p-6 max-w-lg w-full">
@@ -15,8 +14,10 @@
         </p>
 
         @if (error()) {
-          <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-3">
-            ⚠️ {{ error() }}
+          <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg> {{ error() }}
           </div>
         }
 
@@ -64,19 +65,30 @@
 
         <div class="flex justify-end gap-2">
           <button (click)="cancelar()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
-            Cancelar
+            class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg> Cancelar
           </button>
           <button (click)="guardar()" [disabled]="guardando()"
-            class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition disabled:opacity-60">
-            {{ guardando() ? 'Guardando...' : '⭐ Emitir autorización' }}
+            class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition disabled:opacity-60 flex items-center gap-1.5">
+            @if (guardando()) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg> {{ guardando() ? 'Guardando...' : ''}}
+            } @else {
+              <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+              </svg>
+              {{ guardando() ? '' : 'Emitir autorización' }}
+            }
           </button>
         </div>
       </div>
     </div>
   }
 
-  <!-- ============ SIDEBAR ============ -->
   <aside
     class="fixed lg:static inset-y-0 left-0 z-40 w-60 bg-slate-800 text-white flex flex-col shrink-0 transition-transform duration-200 lg:translate-x-0"
     [class.translate-x-0]="sidebarAbierto()"
@@ -107,21 +119,41 @@
       <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-2 mb-1">Principal</p>
 
       <a routerLink="/dashboard" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">📊</span> Dashboard
+        <span class="w-4 h-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v16.5M21 19.5H3.75M6.75 12v3m3.75-6v6m3.75-9v9m3.75-12v12" />
+          </svg>
+        </span>
+        Dashboard
       </a>
 
       <a routerLink="/organizaciones-lista" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">🏘️</span> Organizaciones
+        <span class="w-4 h-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21.75c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+          </svg>
+        </span>
+        Organizaciones
       </a>
 
       <a routerLink="/historial-directivas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">📜</span> Historial de Directivas
+        <span class="w-4 h-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+        </span>
+        Historial de Directivas
       </a>
 
       <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Gestión</p>
 
       <a routerLink="/alertas" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-        <span class="w-5 text-center">🔔</span> Alertas
+        <span class="w-4 h-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+          </svg>
+        </span>
+        Alertas
         @if (badgeAlertas.totalAlertas() > 0) {
           <span class="ml-auto bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
             {{ badgeAlertas.totalAlertas() }}
@@ -131,13 +163,23 @@
 
       @if (esAdmin() || esJefe() || esTecnico()) {
         <a routerLink="/renovaciones" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-          <span class="w-5 text-center">🔄</span> Renovaciones
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </span>
+          Renovaciones
         </a>
       }
 
       @if (esAdmin() || esJefe()) {
         <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg bg-amber-500 text-white text-sm font-semibold cursor-pointer">
-          <span class="w-5 text-center">⭐</span> Autorizaciones
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+          </span>
+          Autorizaciones
         </div>
       }
 
@@ -145,15 +187,31 @@
         <p class="text-[10px] font-bold uppercase tracking-wider text-white/30 px-1 mt-4 mb-1">Sistema</p>
 
         <a routerLink="/usuarios" routerLinkActive="bg-amber-500 text-white" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-          <span class="w-5 text-center">👤</span> Usuarios
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+          </span>
+          Usuarios
         </a>
 
         <div class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-          <span class="w-5 text-center">📋</span> Bitácora
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm0 5.25h.007v.008H3.75V12Zm0 5.25h.007v.008H3.75v-.008Z" />
+            </svg>
+          </span>
+          Bitácora
         </div>
 
         <a routerLink="/configuracion" routerLinkActive="bg-amber-500 text-white" class="flex items-center gap-2.5 px-3 py-2.5 mb-0.5 rounded-lg text-white/65 text-sm hover:bg-white/10 hover:text-white cursor-pointer">
-          <span class="w-5 text-center">⚙️</span> Configuración
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127c.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.767a1.123 1.123 0 0 0-.417 1.03c.004.074.006.148.006.22c0 .072-.002.146-.006.22a1.123 1.123 0 0 0 .417 1.03l1.003.767a1.125 1.125 0 0 1 .26 1.43l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.216-.456a1.125 1.125 0 0 0-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.646-.87a6.512 6.512 0 0 1-.22-.127a1.125 1.125 0 0 0-1.074-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .26-1.43l1.003-.767a1.122 1.122 0 0 0 .417-1.03a6.445 6.445 0 0 1-.006-.22c0-.072.002-.146.006-.22a1.122 1.122 0 0 0-.417-1.03l-1.003-.767a1.125 1.125 0 0 1-.26-1.43l1.296-2.247a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128c.332-.183.582-.495.644-.869l.214-1.28Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </span>
+          Configuración
         </a>
       }
 
@@ -162,15 +220,17 @@
     <div class="p-4 border-t border-white/10 shrink-0">
       <button
         (click)="cerrarSesion()"
-        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition"
+        class="w-full py-2.5 bg-red-600/15 border border-red-600/30 rounded-lg text-red-300 text-sm font-medium hover:bg-red-600/25 transition flex items-center justify-center gap-2"
       >
-        🚪 Cerrar sesión
+       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+          </svg>
+        Cerrar sesión
       </button>
     </div>
 
   </aside>
 
-  <!-- ============ CONTENIDO PRINCIPAL ============ -->
   <div class="flex-1 flex flex-col overflow-hidden">
 
     <div class="bg-white border-b border-slate-200 h-16 px-4 lg:px-7 flex items-center justify-between shrink-0">
@@ -188,16 +248,22 @@
         </div>
       </div>
       <button (click)="abrirFormulario()"
-        class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">
-        + Nueva autorización
+        class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Nueva autorización
       </button>
     </div>
 
     <div class="flex-1 overflow-y-auto p-4 lg:p-7">
 
       @if (exito()) {
-        <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2 mb-4 max-w-4xl mx-auto">
-          ✅ {{ exito() }}
+        <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2 mb-4 max-w-4xl mx-auto flex items-center gap-2">
+          <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ exito() }}</span>
         </div>
       }
 
@@ -206,14 +272,16 @@
       } @else {
         <div class="max-w-4xl mx-auto space-y-6">
 
-          <!-- Autorizaciones activas -->
           <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div class="bg-amber-50 px-4 py-3 border-b border-amber-200 flex justify-between items-center">
-              <span class="text-sm font-bold text-amber-700">
-                ⭐ Autorizaciones activas
-                <span class="text-xs font-normal ml-1">(pendientes de usar en una renovación)</span>
+            <div class="bg-amber-50 px-4 py-3 border-b border-amber-200 flex justify-between items-center gap-2">
+              <span class="text-sm font-bold text-amber-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>Autorizaciones activas</span>
+                <span class="text-xs font-normal ml-1 text-amber-600/80">(pendientes de usar en una renovación)</span>
               </span>
-              <span class="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full shrink-0">
                 {{ activas().length }}
               </span>
             </div>
@@ -229,29 +297,44 @@
                     <div class="flex-1 min-w-0">
                       <div class="font-bold text-sm text-slate-800">{{ a.nombre_persona }}</div>
                       <div class="text-xs text-slate-500 mt-0.5">DNI: {{ a.dni }}</div>
-                      <div class="text-xs text-slate-600 mt-1">
-                        🏘️ {{ a.nombre_organizacion }}
-                        <span class="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                      <div class="text-xs text-slate-600 mt-1 flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span class="truncate">{{ a.nombre_organizacion }}</span>
+                        <span class="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 shrink-0">
                           {{ a.categoria_org === 'patronato' ? 'Patronato' : 'Junta de Agua' }}
                         </span>
                       </div>
                       @if (a.justificacion) {
-                        <div class="text-xs text-slate-500 mt-2 italic">
-                          "{{ a.justificacion }}"
+                        <div class="text-xs text-slate-500 mt-2 italic flex items-start gap-1.5 pl-5">
+                          <svg class="w-3.5 h-3.5 text-slate-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span class="flex-1">"{{ a.justificacion }}"</span>
                         </div>
                       }
                     </div>
-                    <div class="flex flex-col items-end gap-1 shrink-0 text-right">
-                      <span class="text-xs font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
-                        ✅ Período {{ a.periodo_solicitado }} autorizado
+                    <div class="flex flex-col items-end gap-1.5 shrink-0 text-right md:w-48">
+                      <span class="text-xs font-bold bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1.5 whitespace-nowrap">
+                        <svg class="w-3 h-3 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Período {{ a.periodo_solicitado }} autorizado</span>
                       </span>
-                      <span class="text-xs text-slate-400">
-                        {{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}
-                      </span>
+                      <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                        <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}</span>
+                      </div>
                       @if (a.autorizador) {
-                        <span class="text-xs text-slate-400">
-                          Por: {{ a.autorizador.correo }}
-                        </span>
+                        <div class="text-xs text-slate-400 flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5 text-slate-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span class="truncate">Por: {{ a.autorizador.correo }}</span>
+                        </div>
                       }
                     </div>
                   </div>
@@ -260,13 +343,15 @@
             }
           </div>
 
-          <!-- Historial de autorizaciones usadas -->
           <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-              <span class="text-sm font-bold text-slate-600">
-                📋 Historial de autorizaciones usadas
+            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center gap-2">
+              <span class="text-sm font-bold text-slate-600 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Historial de autorizaciones usadas</span>
               </span>
-              <span class="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+              <span class="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full shrink-0">
                 {{ historicas().length }}
               </span>
             </div>
@@ -276,32 +361,47 @@
                 No hay autorizaciones históricas todavía.
               </div>
             } @else {
-              <div class="divide-y divide-slate-100">
+              <div class="divide-y divide-slate-100 divide-slate-100">
                 @for (a of historicas(); track a.id) {
                   <div class="p-4 flex flex-col md:flex-row gap-3 opacity-70">
                     <div class="flex-1 min-w-0">
                       <div class="font-bold text-sm text-slate-700">{{ a.nombre_persona }}</div>
                       <div class="text-xs text-slate-500 mt-0.5">DNI: {{ a.dni }}</div>
-                      <div class="text-xs text-slate-600 mt-1">
-                        🏘️ {{ a.nombre_organizacion }}
+                      <div class="text-xs text-slate-600 mt-1 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span class="truncate">{{ a.nombre_organizacion }}</span>
                       </div>
                       @if (a.justificacion) {
-                        <div class="text-xs text-slate-500 mt-2 italic">
-                          "{{ a.justificacion }}"
+                        <div class="text-xs text-slate-500 mt-2 italic flex items-start gap-1.5 pl-5 pl-5">
+                          <svg class="w-3.5 h-3.5 text-slate-300 shrink-0 mt-0.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span class="flex-1">"{{ a.justificacion }}"</span>
                         </div>
                       }
                     </div>
-                    <div class="flex flex-col items-end gap-1 shrink-0 text-right">
-                      <span class="text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-1 rounded-full">
-                        ✓ Período {{ a.periodo_solicitado }} — ya usado
+                    <div class="flex flex-col md:w-48 gap-1.5 items-end shrink-0 md:w-48 text-right shrink-0 divide-slate-100">
+                      <span class="text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-1 rounded-full flex flex-wrap gap-1 whitespace-nowrap whitespace-nowrap">
+                        <svg class="w-3 h-3 text-slate-400 shrink-0 mt-0.5 whitespace-nowrap" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Período {{ a.periodo_solicitado }} — ya usado</span>
                       </span>
-                      <span class="text-xs text-slate-400">
-                        {{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}
-                      </span>
+                      <div class="text-xs text-slate-400 flex items-center justify-end mt-0.5 mt-1 mt-0.5 pl-1 pl-1 items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{{ a.fecha_autorizacion | date:'dd/MM/yyyy' }}</span>
+                      </div>
                       @if (a.autorizador) {
-                        <span class="text-xs text-slate-400">
-                          Por: {{ a.autorizador.correo }}
-                        </span>
+                        <div class="text-xs text-slate-400 flex items-center justify-end justify-end mt-0.5 mt-1 mt-0.5 mt-0.5">
+                          <svg class="w-3.5 h-3.5 text-slate-300 shrink-0 mt-0.5 pl-1 pl-1 pl-1 pl-1 whitespace-nowrap overflow-hidden justify-end flex items-center gap-1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span class="pl-1 pl-1 whitespace-nowrap overflow-hidden text-ellipsis justify-end flex items-center gap-1">Por: {{ a.autorizador.correo }}</span>
+                        </div>
                       }
                     </div>
                   </div>

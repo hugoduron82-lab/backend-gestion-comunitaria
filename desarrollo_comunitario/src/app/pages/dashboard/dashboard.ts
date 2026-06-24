@@ -16,6 +16,7 @@ import { BadgeAlertasService } from '../../services/badge-alertas';
 export class Dashboard implements OnInit {
   usuario: any;
   fechaHoy = '';
+  dropdownEstadoAbierto = signal(false);
   sidebarAbierto = signal(false);
   stats = signal<any>(null);
   cargandoStats = signal(true);
@@ -28,7 +29,9 @@ export class Dashboard implements OnInit {
   porPagina = 12;
   filtroSemaforo = signal('todos');
   filtroCategoria = signal('todos');
-  filtroZona = signal<number | null>(null);
+  
+  // Se cambia a filtroZone para mantener consistencia exacta con el HTML modificado
+  filtroZone = signal<number | null>(null); 
   busqueda = signal('');
   private timeoutBusqueda: any;
 
@@ -65,7 +68,7 @@ export class Dashboard implements OnInit {
           total_juntas_agua: Number(data.total_juntas_agua),
         };
         this.stats.set(stats);
-        // Sincronizar badge compartido con datos del dashboard
+        
         this.badgeAlertas.totalAlertas.set(
           stats.total_proximas_vencer + stats.total_vencidas
         );
@@ -85,11 +88,30 @@ export class Dashboard implements OnInit {
       porPagina: this.porPagina,
       estado: this.filtroSemaforo(),
       categoria: this.filtroCategoria(),
-      zona: this.filtroZona(),
+      zona: this.filtroZone(),
       busqueda: this.busqueda()
     }).subscribe({
       next: (res) => {
-        this.organizaciones.set(res.data ?? []);
+        const datosOriginales = res.data ?? [];
+
+        // Ordenamos las tarjetas por prioridad: 
+        // 1. Próximas a vencer (Amarillas)
+        // 2. Vencidas (Rojas)
+        // 3. Activas (Verdes)
+        const datosOrdenados = [...datosOriginales].sort((a, b) => {
+          const orden: { [key: string]: number } = {
+            'proxima_vencer': 1,
+            'vencida': 2,
+            'activa': 3
+          };
+
+          const prioridadA = orden[a.estado] || 4;
+          const prioridadB = orden[b.estado] || 4;
+
+          return prioridadA - prioridadB;
+        });
+
+        this.organizaciones.set(datosOrdenados);
         this.totalPaginas.set(res.totalPaginas ?? 1);
         this.totalRegistros.set(res.total ?? 0);
         this.cargandoOrgs.set(false);
@@ -121,7 +143,7 @@ export class Dashboard implements OnInit {
   }
 
   onZonaChange(valor: string) {
-    this.filtroZona.set(valor ? parseInt(valor, 10) : null);
+    this.filtroZone.set(valor ? parseInt(valor, 10) : null);
     this.paginaActual.set(1);
     this.cargarOrganizaciones();
   }
@@ -139,29 +161,6 @@ export class Dashboard implements OnInit {
     if (p < 1 || p > this.totalPaginas()) return;
     this.paginaActual.set(p);
     this.cargarOrganizaciones();
-  }
-
-  contarSemaforo(valor: string): number {
-    const s = this.stats();
-    if (!s) return 0;
-    switch (valor) {
-      case 'todos': return s.total_organizaciones ?? 0;
-      case 'activa': return s.total_activas ?? 0;
-      case 'proxima_vencer': return s.total_proximas_vencer ?? 0;
-      case 'vencida': return s.total_vencidas ?? 0;
-      default: return 0;
-    }
-  }
-
-  contarCategoria(valor: string): number {
-    const s = this.stats();
-    if (!s) return 0;
-    switch (valor) {
-      case 'todos': return s.total_organizaciones ?? 0;
-      case 'patronato': return s.total_patronatos ?? 0;
-      case 'junta_agua': return s.total_juntas_agua ?? 0;
-      default: return 0;
-    }
   }
 
   diasParaVencer(o: any): number {
@@ -200,4 +199,10 @@ export class Dashboard implements OnInit {
     this.auth.logout();
     this.router.navigate(['/login']);
   }
+
+  seleccionarEstado(valor: string) {
+  this.setSemaforo(valor);
+  this.dropdownEstadoAbierto.set(false); // Esto cierra el menú al hacer clic en una opción
+}
+
 }
